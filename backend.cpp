@@ -14,9 +14,7 @@
 
 // Outline for Backend
 
-grpc::Status Backend::put(grpc::ServerContext *context,
-    const chirp::PutRequest *request,
-    chirp::PutReply *reply) {
+grpc::Status Backend::put(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) {
   /* TODO:
   	- Create PutRequest proto
     - Read PUT: request
@@ -33,9 +31,7 @@ grpc::Status Backend::get(grpc::ServerContext *server, grpc::ServerReaderWriter<
   */ 
 }
 
-grpc::Status Backend::del(grpc::ServerContext *server,
-    const chirp::DelRequest *request, 
-    chirp::DelReply *reply) {
+grpc::Status Backend::del(grpc::ServerContext *server, const chirp::DelRequest *request, chirp::DelReply *reply) {
 	/* TODO:
 	- create DelRequest and DelReply protos
     - Read DEL request
