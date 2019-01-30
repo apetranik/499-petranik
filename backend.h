@@ -13,7 +13,7 @@
 // Handles GET, PUT and DELETE from service layer to retrieve/store info 
 class Backend {
  public:
-   grpc::Status put(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) message get(const std::string &key);
-   grpc::Status get(grpc::ServerContext *server, grpc::ServerReaderWriter<chirp::GetReply, chirp::GetRequest> *stream);
-   grpc::Status del(grpc::ServerContext *server, const chirp::DeleteRequest *request, chirp::DeleteReply *reply)
+   grpc::Status MakePutRequest(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) message get(const std::string &key);
+   grpc::Status MakeGetRequest(grpc::ServerContext *server, grpc::ServerReaderWriter<chirp::GetReply, chirp::GetRequest> *stream);
+   grpc::Status MakeDelRequest(grpc::ServerContext *server, const chirp::DeleteRequest *request, chirp::DeleteReply *reply)
 };
