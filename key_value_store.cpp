@@ -5,24 +5,23 @@ KeyValueStore::KeyValueStore() : key_value_store() {}
 KeyValueStore::~KeyValueStore() {}
 
 // TODO: make test for get + support concurrency
-bool KeyValueStore::Get(const std::string &key, std::string *reply) {
-  auto it = key_value_store.find(key);
+std::optional<std::string *> KeyValueStore::Get(const std::string &key) {
+  auto it = key_value_store_.find(key);
 
-  if (it != key_value_store.end()) {
-    *reply = it->second;
-    return true;
+  if (it != key_value_store_.end()) {
+    return it->second;
   }
-  return false;
+  return;
 }
 
 // TODO: Make test for put + support concurrency
 bool KeyValueStore::Put(const std::string &key, const std::string &value) {
-  key_value_store[key] = value;
+  key_value_store_[key] = value;
   return true;
 }
 
 // TODO: Make test for delete + support concurrency
-bool KeyValueStore::Delete(const std::string &key) {
-  auto success = key_value_store.erase(key_to_del);
+bool KeyValueStore::Del(const std::string &key) {
+  auto success = key_value_store_.erase(key_to_del);
   return success;
 }
