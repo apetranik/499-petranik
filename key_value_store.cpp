@@ -11,7 +11,7 @@ std::optional<std::string *> KeyValueStore::Get(const std::string &key) {
   if (it != key_value_store_.end()) {
     return it->second;
   }
-  return;
+  return {};
 }
 
 // TODO: Make test for put + support concurrency
