@@ -1,17 +1,31 @@
-#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
-// The middle service layer that handles calls from the command line tool and acceses the backend key-value store
-class Service {
-  public:
-   // Posts a new chirp (optionally as a reply)
-   message chirp(const std::string &user, const std::string &text, bytes chirp_id);
-   // Registers the given non-blank username
-   message registerUser(const std::string &user);
-   // Starts following a given user
-   message follow(const std::string &user, const std::string &user_to_follow);
-   // Reads a chirp thread from the given id
-   message read(bytes chirp_id);
-   // Streams chirps from all followed users
-   message monitor(const std::string &user);
+#include <grpcpp/channel.h>
+#include "service.grpc.pb.h"
+#include "key_value_store.grpc.pb.h"
+
+// A backend service to receive requests from client (command line)
+class Service final : public chirp::ServiceLayer::Service {
+ public:
+  Service();
+  
+  // Registers the given non-blank username
+  grpc::Status registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply);
+
+  // Posts a new chirp (optionally as a reply)
+  grpc::Status chirp(grpc::ServerContext *context, const chirp::ChirpRequest *request, chirp::ChirpReply *reply);
+  
+  // Starts following a given user
+  grpc::Status follow(grpc::ServerContext *context, const chirp::FollowRequest *request, chirp::FollowReply *reply);
+
+  // Reads a chirp thread from the given id
+  grpc::Status read(grpc::ServerContext *context, const chirp::ReadRequest *request, chirp::ReadReply *reply);
+
+  // Streams chirps from all followed users
+  grpc::Status monitor(grpc::ServerContext *context, const chirp::MonitorRequest *request, chirp::MonitorReply *reply);
+
 };
-	
+
+
