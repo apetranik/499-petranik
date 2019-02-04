@@ -12,9 +12,7 @@
 #include <grpcpp/impl/codegen/status.h>
 
 
-// Outline for Backend
-
-grpc::Status Backend::put(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) {
+grpc::Status Backend::MakePutRequest(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) {
   /* TODO:
   	- Create PutRequest proto
     - Read PUT: request
@@ -23,7 +21,7 @@ grpc::Status Backend::put(grpc::ServerContext *context, const chirp::PutRequest 
   */
 
 }
-grpc::Status Backend::get(grpc::ServerContext *server, grpc::ServerReaderWriter<chirp::GetReply, chirp::GetRequest> *stream) {
+grpc::Status Backend::MakeGetRequest(grpc::ServerContext *server, grpc::ServerReaderWriter<chirp::GetReply, chirp::GetRequest> *stream) {
   /* TODO:
     - Create GetReply and GetRequest proto
     - Read GET request
@@ -31,7 +29,7 @@ grpc::Status Backend::get(grpc::ServerContext *server, grpc::ServerReaderWriter<
   */ 
 }
 
-grpc::Status Backend::del(grpc::ServerContext *server, const chirp::DelRequest *request, chirp::DelReply *reply) {
+grpc::Status Backend::MakeDelRequest(grpc::ServerContext *server, const chirp::DelRequest *request, chirp::DelReply *reply) {
 	/* TODO:
 	- create DelRequest and DelReply protos
     - Read DEL request
