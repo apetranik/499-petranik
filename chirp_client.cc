@@ -8,8 +8,8 @@
 
 #include "service.grpc.pb.h"
 
-DEFINE_string(user, "", "");
-DEFINE_string(chirp, "", "");
+DEFINE_string(user, "default_user", "current user of chirp");
+DEFINE_string(chirp, "default_chirp", "string to chirp out");
 
 chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text, const std::string& parent_id) {
   // Set request params
