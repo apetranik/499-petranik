@@ -26,7 +26,9 @@ LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
 else
 LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl
+           -ldl\
+           -lgflags\
+
 endif
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -40,7 +42,7 @@ all: service client
 
 service: service.h service.cc service.pb.o service.grpc.pb.o
 	g++ -std=c++11 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
-	g++ key_value_store.o service.o service.grpc.pb.o service.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
+	g++ service.o service.grpc.pb.o service.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
 
 client: client.h client.cc service.pb.o service.grpc.pb.o client
 	$(CXX) $^ $(LDFLAGS) -o $@
@@ -52,7 +54,7 @@ client: client.h client.cc service.pb.o service.grpc.pb.o client
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h backend_server client
+	rm -f *.o *.pb.cc *.pb.h service client
 
 
 # key_value_store: key_value_store.h key_value_store.cc

@@ -1,12 +1,15 @@
 #include "client.h"
-
 #include <iostream>
 #include <memory>
 #include <string>
 
+#include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
 
 #include "service.grpc.pb.h"
+
+DEFINE_string(user, "", "");
+DEFINE_string(chirp, "", "");
 
 chirp::Chirp Client::chirp(const std::string& user, const std::string& text, const std::string& parent_id) {
   // Set request params
@@ -45,10 +48,13 @@ chirp::Chirp Client::chirp(const std::string& user, const std::string& text, con
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
   Client greeter(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
-  std::string user("aliya");
-  std::string text("hello world");
+
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  std::string user = FLAGS_user;
+  std::string chirp = FLAGS_chirp;
   std::string parent_id("1");
-  chirp::Chirp reply = greeter.chirp(user, text, parent_id);
+
+  chirp::Chirp reply = greeter.chirp(user, chirp, parent_id);
   std::cout << "Client received chirp " << std::endl;
 
   return 0;
