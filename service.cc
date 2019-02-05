@@ -10,8 +10,6 @@
 
 #include "service.grpc.pb.h"
 
-Service::Service() {}
-
 grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply) {
   return grpc::Status::OK;
   /* TODO:
