@@ -64,7 +64,7 @@ backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_valu
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h service chirp backend_server backend_client backend_data_structure
+	rm -f *.o *.pb.cc *.pb.h service chirp backend_server backend_client key_value_store
 
 
 # key_value_store: key_value_store.h key_value_store.cc

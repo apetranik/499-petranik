@@ -27,7 +27,7 @@ std::vector<std::string> BackendClient::SendGetRequest(const std::vector<std::st
   std::vector<std::string> replies;
 
   while (stream->Read(&reply)) {
-    replies->push_back(reply.value());
+    replies.push_back(reply.value());
   }
 
   write_to_stream.join();

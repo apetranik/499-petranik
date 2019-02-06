@@ -4,7 +4,6 @@
 
 #include <grpcpp/channel.h>
 #include "service.grpc.pb.h"
-#include "key_value_store.grpc.pb.h"
 
 // A backend service to receive requests from client (command line)
 class Service final : public chirp::ServiceLayer::Service {
