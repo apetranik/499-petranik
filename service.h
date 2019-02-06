@@ -9,7 +9,7 @@
 // A backend service to receive requests from client (command line)
 class Service final : public chirp::ServiceLayer::Service {
  public:
-  Service();
+  Service() {}
   
   // Registers the given non-blank username
   grpc::Status registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply);

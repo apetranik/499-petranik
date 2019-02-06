@@ -1,4 +1,4 @@
-#include "client.h"
+#include "chirp_client.h"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -8,10 +8,10 @@
 
 #include "service.grpc.pb.h"
 
-DEFINE_string(user, "", "");
-DEFINE_string(chirp, "", "");
+DEFINE_string(user, "default_user", "current user of chirp");
+DEFINE_string(chirp, "default_chirp", "string to chirp out");
 
-chirp::Chirp Client::chirp(const std::string& user, const std::string& text, const std::string& parent_id) {
+chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text, const std::string& parent_id) {
   // Set request params
   chirp::ChirpRequest request;
   request.set_username(user);
@@ -28,14 +28,13 @@ chirp::Chirp Client::chirp(const std::string& user, const std::string& text, con
   // Reply with chirp if status is ok, else reply with empty chirp (fow now)
   if (status.ok()) {
     return reply.chirp();
-
-  } 
+  }
   else {
     std::cout << status.error_code() << ": " << status.error_message() << std::endl;
     chirp::Chirp chirp;
     return chirp;
   }
-  /* TODO: 
+  /* TODO:
     - Handle reply
     - Do something more useful if reply is null
     - handle front end CLI chirp request
@@ -47,7 +46,11 @@ chirp::Chirp Client::chirp(const std::string& user, const std::string& text, con
 // localhost at port 50051). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
+<<<<<<< HEAD:client.cc
   Client greeter(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+=======
+  ChirpClient greeter(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+>>>>>>> master:chirp_client.cc
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string user = FLAGS_user;
