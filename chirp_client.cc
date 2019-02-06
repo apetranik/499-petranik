@@ -28,13 +28,13 @@ chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text
   // Reply with chirp if status is ok, else reply with empty chirp (fow now)
   if (status.ok()) {
     return reply.chirp();
-  } 
+  }
   else {
     std::cout << status.error_code() << ": " << status.error_message() << std::endl;
     chirp::Chirp chirp;
     return chirp;
   }
-  /* TODO: 
+  /* TODO:
     - Handle reply
     - Do something more useful if reply is null
     - handle front end CLI chirp request
@@ -46,7 +46,11 @@ chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text
 // localhost at port 50051). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
+<<<<<<< HEAD:client.cc
+  Client greeter(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+=======
   ChirpClient greeter(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+>>>>>>> master:chirp_client.cc
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string user = FLAGS_user;
