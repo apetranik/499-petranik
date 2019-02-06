@@ -7,7 +7,6 @@
 #include <iostream>
 #include <optional>
 
-
 // the key-value data structure for storing chirp data
 // Has GET, PUT, DEL functionality
 class KeyValueStore {
@@ -17,7 +16,7 @@ class KeyValueStore {
 
    // get value from key-value store using key. 
    // return true if successful
-   std::optional<std::string *> Get(const std::string &key);
+   bool Get(const std::string &key, std::string *reply);
 
    // puts new key,value or updates value in store
    // return true in successful

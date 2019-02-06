@@ -18,7 +18,7 @@ HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++17
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -lgrpc++_reflection\
@@ -41,17 +41,17 @@ vpath %.proto $(PROTOS_PATH)
 all: service chirp key_value_store backend_server backend_client
 
 service: service.h service.cc service.pb.o service.grpc.pb.o
-	g++ -std=c++11 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
+	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
 	g++ service.o service.grpc.pb.o service.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
 
 chirp: chirp_client.h chirp_client.cc service.pb.o service.grpc.pb.o chirp
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 key_value_store: key_value_store.h key_value_store.cc
-	g++ -std=c++11 -c -o key_value_store.o key_value_store.cc
+	g++ -std=c++17 -c -o key_value_store.o key_value_store.cc
 
 backend_server: backend_server.h backend_server.cc key_value_store.pb.o key_value_store.grpc.pb.o key_value_store
-	g++ -std=c++11 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
+	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
 	g++ key_value_store.o backend_server.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
 
 backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_value_store.grpc.pb.o backend_client
