@@ -12,20 +12,20 @@
 // Has GET, PUT, DEL functionality
 class KeyValueStore {
  public:
-  KeyValueStore();
-  virtual ~KeyValueStore();
+   KeyValueStore();
+   virtual ~KeyValueStore();
 
-  // get value from key-value store using key. 
-  // return true if successful
-  bool Get(const std::string &key, std::string *output_value);
+   // get value from key-value store using key. 
+   // return true if successful
+   std::optional<std::string *> Get(const std::string &key);
 
-  // puts new key,value or updates value in store
-  // return true in successful
-  bool Put(const std::string &key, const std::string &value);
+   // puts new key,value or updates value in store
+   // return true in successful
+   bool Put(const std::string &key, const std::string &value);
 
-  // deletes key,value from store
-  // return true in successful
-  bool Del(const std::string &key);
+   // deletes key,value from store
+   // return true in successful
+   bool Del(const std::string &key);
 
  private:
   // data structure.
