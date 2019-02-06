@@ -9,7 +9,7 @@
 
 #include "service.grpc.pb.h"
 
-std::vector<std::string>* BackendClient::SendGetRequest(const std::vector<std::string> &keys) {
+std::vector<std::string> BackendClient::SendGetRequest(const std::vector<std::string> &keys) {
   grpc::ClientContext context;
 
   std::shared_ptr<grpc::ClientReaderWriter<chirp::GetRequest, chirp::GetReply>> stream(stub_->get(&context));
@@ -24,7 +24,7 @@ std::vector<std::string>* BackendClient::SendGetRequest(const std::vector<std::s
   });
 
   chirp::GetReply reply;
-  std::vector<std::string> *replies;
+  std::vector<std::string> replies;
 
   while (stream->Read(&reply)) {
     replies->push_back(reply.value());
@@ -32,13 +32,11 @@ std::vector<std::string>* BackendClient::SendGetRequest(const std::vector<std::s
 
   write_to_stream.join();
   grpc::Status status = stream->Finish();
-
-  return replies; // currently still returns if empty
-
   /* TODO: 
     - handle failed get requests and successful, but empty replies
     - figure out concurrency
   */
+  return replies; // currently still returns if empty
 }
 
 bool BackendClient::SendPutRequest(const std::string &key, const std::string &value) {
@@ -55,12 +53,11 @@ bool BackendClient::SendPutRequest(const std::string &key, const std::string &va
   if(status.ok()) {
     return true;
   }
-  return false;
-
   /* TODO: 
     - handle failed put requests with more meaningful status
     - figure out concurrency
   */
+  return false;
 }
 
 bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
@@ -76,12 +73,11 @@ bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
   if(status.ok()) {
     return true;
   }
-  return false;
-
   /* TODO: 
     - handle failed put requests with more meaningful status
     - figure out concurrency
   */
+  return false;
 }
 
 // Instantiate client. It requires a channel, out of which the actual RPCs

@@ -19,7 +19,7 @@ class BackendClient {
    BackendClient(std::shared_ptr<grpc::Channel> channel) : stub_(chirp::KeyValueStore::NewStub(channel)) {}
    // Constructs a payload to send to backend_server layer backend thru GRPC
    // Will be received by get() in backend_server and return a vector of string as a reply
-   std::vector<std::string>* SendGetRequest(const std::vector<std::string> &keys);
+   std::vector<std::string> SendGetRequest(const std::vector<std::string> &keys);
    // Constructs a payload to send to backend_server layer backend thru GRPC
    // Will be received by put() in backend_server
    // returns true if PUT was successful.
