@@ -35,13 +35,11 @@ grpc::Status KeyValueStoreImpl::get(grpc::ServerContext *context, grpc::ServerRe
     chirp::GetReply reply;
     std::string value;
 
-    bool success = key_value_store_.Get(request.key(), &value);
-    if (success) {
-      reply.set_value(value);
-    }
-    else {
-      reply.set_value("");
-    }
+    // gets value from optional or if returned {} save an empty reply
+    auto optional_reply = key_value_store_.Get(request.key()).value_or("");
+    reply.set_value(value);
+
+    reply.set_value("");
     stream->Write(reply);
   }
 
