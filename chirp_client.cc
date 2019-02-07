@@ -4,6 +4,8 @@
 #include <string>
 
 #include <gflags/gflags.h>
+#include <glog/glog.h>
+
 #include <grpcpp/grpcpp.h>
 
 #include "service.grpc.pb.h"
@@ -132,8 +134,8 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 
   // Read reply from stream
   while (reader->Read(&reply)) {
-    std::cout << "Received chirp back" << std::endl;
-    std::cout << reply.chirp().username() << std::endl;
+    LOG(INFO) << Received chirp back;
+    LOG(INFO) << reply.chirp().username();
   }
 
   grpc::Status status = reader->Finish();
@@ -163,7 +165,6 @@ int main(int argc, char** argv) {
   std::string chirp = FLAGS_chirp;
   std::string parent_id("1");
 
-  //chirp::Chirp reply = greeter.chirp(user, chirp, parent_id);
   chirp::Chirp reply = greeter.monitor(user);
 
   return 0;
