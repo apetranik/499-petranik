@@ -22,9 +22,8 @@ class Service final : public chirp::ServiceLayer::Service {
   // Reads a chirp thread from the given id
   grpc::Status read(grpc::ServerContext *context, const chirp::ReadRequest *request, chirp::ReadReply *reply);
 
-  // Streams chirps from all followed users
-  grpc::Status monitor(grpc::ServerContext *context, const chirp::MonitorRequest *request, chirp::MonitorReply *reply);
-
+  // Streams chirps from all followed users, returns a stream MonitorReply
+  grpc::Status monitor(grpc::ServerContext *context, const chirp::MonitorRequest *request, grpc::ServerWriter<chirp::MonitorReply> *stream);
 };
 
 

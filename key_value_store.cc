@@ -1,20 +1,26 @@
 #include "key_value_store.h"
+#include <optional>
+#include <functional>
 #include <string>
 #include <iostream>
-#include <optional>
 
 KeyValueStore::KeyValueStore() : key_value_store_() {}
 
 KeyValueStore::~KeyValueStore() {}
 
 // TODO: make test for get + support concurrency
-std::optional<std::string *> KeyValueStore::Get(const std::string &key) {
+bool KeyValueStore::Get(const std::string &key, std::string *reply) {
   auto it = key_value_store_.find(key);
 
   if (it != key_value_store_.end()) {
-    return it->second;
+    if (reply != nullptr) {
+      *reply = it->second;
+    }
+    return true;
   }
-  return {};
+  else {
+    return false;
+  }
 }
 
 // TODO: Make test for put + support concurrency
