@@ -9,17 +9,16 @@ KeyValueStore::KeyValueStore() : key_value_store_() {}
 KeyValueStore::~KeyValueStore() {}
 
 // TODO: make test for get + support concurrency
-bool KeyValueStore::Get(const std::string &key, std::string *reply) {
+std::optional<std::string> KeyValueStore::Get(const std::string &key) {
   auto it = key_value_store_.find(key);
 
   if (it != key_value_store_.end()) {
     if (reply != nullptr) {
-      *reply = it->second;
-    }
-    return true;
+      return it->second;
+    } 
   }
   else {
-    return false;
+    return {};
   }
 }
 
