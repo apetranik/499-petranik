@@ -4,7 +4,7 @@
 #include <string>
 
 #include <gflags/gflags.h>
-#include <glog/glog.h>
+#include <glog/logging.h>
 
 #include <grpcpp/grpcpp.h>
 
@@ -134,8 +134,8 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 
   // Read reply from stream
   while (reader->Read(&reply)) {
-    LOG(INFO) << Received chirp back;
-    LOG(INFO) << reply.chirp().username();
+    LOG(INFO) << "Received chirp back" << std::endl;
+    LOG(INFO) << reply.chirp().username() << std::endl;
   }
 
   grpc::Status status = reader->Finish();
@@ -159,7 +159,7 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
   ChirpClient greeter(grpc::CreateChannel("localhost:50000", grpc::InsecureChannelCredentials()));
-
+  google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string user = FLAGS_user;
   std::string chirp = FLAGS_chirp;

@@ -3,6 +3,8 @@
 #include <functional>
 #include <string>
 #include <iostream>
+#include <cstddef>
+
 
 KeyValueStore::KeyValueStore() : key_value_store_() {}
 
@@ -13,7 +15,7 @@ std::optional<std::string> KeyValueStore::Get(const std::string &key) {
   auto it = key_value_store_.find(key);
 
   if (it != key_value_store_.end()) {
-    if (reply != nullptr) {
+    if (!it->second.empty()) {
       return it->second;
     } 
   }
