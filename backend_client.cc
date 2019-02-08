@@ -7,7 +7,7 @@
 #include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
 
-#include "service.grpc.pb.h"
+#include "key_value_store.grpc.pb.h"
 
 std::vector<std::string> BackendClient::SendGetRequest(const std::vector<std::string> &keys) {
   grpc::ClientContext context;
@@ -47,10 +47,11 @@ bool BackendClient::SendPutRequest(const std::string &key, const std::string &va
 
   request.set_key(key);
   request.set_value(value);
-  
+  std::cout << "we out here in SendPutRequest()" << std::endl;
   grpc::Status status = stub_->put(&context, request, &reply);
 
   if(status.ok()) {
+    std::cout << "status was OK" << std::endl;
     return true;
   }
   /* TODO: 
@@ -84,11 +85,11 @@ bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
 // are created. This channel models a connection to an endpoint (in this case,
 // localhost at port 50051). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
-int main(int argc, char** argv) {
-  BackendClient backend_client(grpc::CreateChannel("localhost:50002", grpc::InsecureChannelCredentials()));
+/*int main(int argc, char** argv) {
+  //BackendClient backend_client(grpc::CreateChannel("localhost:50002", grpc::InsecureChannelCredentials()));
 
-  bool reply = backend_client.SendPutRequest("aliya", "testing put");
+ // bool reply = backend_client.SendPutRequest("aliya", "testing put");
   std::cout << "Backend_Client received resp back! " << std::endl;
 
   return 0;
-}
+}*/

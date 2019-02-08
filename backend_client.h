@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <optional>
 
 #include <grpcpp/grpcpp.h>
 #include <grpc/grpc.h>
@@ -10,6 +11,7 @@
 #include <grpcpp/security/server_credentials.h>
 
 #include "key_value_store.grpc.pb.h"
+
 
 // Client for service layer.
 // takes requests from service layer and dispatches to backend_server thru GRPC

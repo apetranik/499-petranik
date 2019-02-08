@@ -9,11 +9,17 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 
-#include "service.grpc.pb.h"
 
 grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply) {
   std::cout << "Received request: " << std::endl;
   std::cout << "username: " << request->username() << std::endl;
+
+  std::string value;
+  chirp::User user;
+  user.set_username(request->username());
+  // serialize user and send to backend
+  user.SerializeToString(&value); 
+  backend_client.SendPutRequest(request->username(), value);
 
   return grpc::Status::OK;
   /* TODO:
@@ -105,6 +111,7 @@ void run_server() {
   builder.RegisterService(&service);
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
   std::cout << "Server is listening on " << server_address << std::endl;
+
   server->Wait();
 }
 
