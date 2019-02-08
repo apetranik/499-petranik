@@ -165,7 +165,6 @@ int main(int argc, char** argv) {
   std::string chirp = FLAGS_chirp;
   std::string parent_id("1");
 
-  //chirp::Chirp reply = greeter.monitor(user);
   bool register_success = greeter.registeruser(user);
 
   return 0;
