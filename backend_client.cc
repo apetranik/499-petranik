@@ -80,16 +80,3 @@ bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
   */
   return false;
 }
-
-// Instantiate client. It requires a channel, out of which the actual RPCs
-// are created. This channel models a connection to an endpoint (in this case,
-// localhost at port 50051). We indicate that the channel isn't authenticated
-// (use of InsecureChannelCredentials()).
-/*int main(int argc, char** argv) {
-  //BackendClient backend_client(grpc::CreateChannel("localhost:50002", grpc::InsecureChannelCredentials()));
-
- // bool reply = backend_client.SendPutRequest("aliya", "testing put");
-  std::cout << "Backend_Client received resp back! " << std::endl;
-
-  return 0;
-}*/
