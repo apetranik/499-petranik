@@ -39,14 +39,13 @@ PROTOS_PATH = ./protos
 
 vpath %.proto $(PROTOS_PATH)
 
-all: service chirp key_value_store backend_server backend_client
+%.grpc.pb.cc: %.proto
+	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
 
-service: service.h service.cc service.pb.o service.grpc.pb.o
-	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
-	g++ service.o service.grpc.pb.o service.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
+%.pb.cc: %.proto
+	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
-chirp: chirp_client.h chirp_client.cc service.pb.o service.grpc.pb.o chirp
-	$(CXX) $^ $(LDFLAGS) -o $@
+all: backend_server backend_client key_value_store service chirp 
 
 key_value_store: key_value_store.h key_value_store.cc
 	g++ -std=c++17 -c -o key_value_store.o key_value_store.cc
@@ -55,14 +54,16 @@ backend_server: backend_server.h backend_server.cc key_value_store.pb.o key_valu
 	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
 	g++ key_value_store.o backend_server.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
 
-backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_value_store.grpc.pb.o backend_client
+backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_value_store.grpc.pb.o
+	g++ -std=c++17 -c -o backend_client.o backend_client.cc
+
+service: service.h service.cc service.pb.o service.grpc.pb.o backend_client
+	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
+	g++ backend_client.o service.o service.grpc.pb.o service.pb.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
+
+chirp: chirp_client.h chirp_client.cc service.pb.o service.grpc.pb.o chirp
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-%.grpc.pb.cc: %.proto
-	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
-
-%.pb.cc: %.proto
-	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
 	rm -f *.o *.pb.cc *.pb.h service chirp backend_server backend_client key_value_store

@@ -155,7 +155,7 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 
 // Instantiate client. It requires a channel, out of which the actual RPCs
 // are created. This channel models a connection to an endpoint (in this case,
-// localhost at port 50051). We indicate that the channel isn't authenticated
+// localhost at port 50000). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
   ChirpClient greeter(grpc::CreateChannel("localhost:50000", grpc::InsecureChannelCredentials()));
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
   std::string chirp = FLAGS_chirp;
   std::string parent_id("1");
 
-  chirp::Chirp reply = greeter.monitor(user);
+  bool register_success = greeter.registeruser(user);
 
   return 0;
 }

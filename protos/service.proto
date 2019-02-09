@@ -58,6 +58,10 @@ message MonitorReply {
  Chirp chirp = 1; 
 }
 
+message User {
+  string username = 1;
+}
+
 service ServiceLayer {
  rpc registeruser (RegisterRequest) returns (RegisterReply) {} 
  rpc chirp (ChirpRequest) returns (ChirpReply) {}
