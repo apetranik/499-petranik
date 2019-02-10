@@ -22,11 +22,7 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
 
   chirp::GetReply reply;
   std::string value;
-  //chirp::User user;
-
-  while (stream->Read(&reply)) {
-      value = reply.value();
-  }
+  value = reply.value();
 
   write_to_stream.join();
   grpc::Status status = stream->Finish();
