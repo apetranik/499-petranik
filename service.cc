@@ -29,8 +29,6 @@ grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::Re
 grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequest *request, chirp::ChirpReply *reply) {
   // Get User from backend, update user with new chirp, send to backend to update
   chirp::User user;
-  std::cout << "service - -1" << std::endl;
-
   std::string current_user = backend_client.SendGetRequest(request->username());
   user.ParseFromString(current_user);
 

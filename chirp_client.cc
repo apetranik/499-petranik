@@ -133,8 +133,8 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 
   // Read reply from stream
   while (reader->Read(&reply)) {
-    std::cout << "Received chirp back" << std::endl;
-    std::cout << reply.chirp().username() << std::endl;
+    LOG(INFO) << "Received chirp back" << std::endl;
+    LOG(INFO) << reply.chirp().username() << std::endl;
   }
 
   grpc::Status status = reader->Finish();
