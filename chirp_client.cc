@@ -5,7 +5,6 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-
 #include <grpcpp/grpcpp.h>
 
 #include "service.grpc.pb.h"
@@ -46,15 +45,14 @@ chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text
   request.set_parent_id(parent_id);
 
   // Data from server will be updated here
-  chirp::ChirpReply reply;
+  chirp::ChirpReply *reply = new chirp::ChirpReply();
 
   grpc::ClientContext context;
   // RPC call
-  grpc::Status status = stub_->chirp(&context, request, &reply);
+  grpc::Status status = stub_->chirp(&context, request, reply);
 
-  // Reply with chirp if status is ok, else reply with empty chirp (fow now)
   if (status.ok()) {
-    return reply.chirp();
+    return reply->chirp();
   } 
   else {
     std::cout << status.error_code() << ": " << status.error_message() << std::endl;
@@ -62,7 +60,6 @@ chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text
     return chirp;
   }
   /* TODO: 
-    - Handle reply
     - Do something more useful if reply is null
     - handle front end CLI chirp request
   */
@@ -166,6 +163,7 @@ int main(int argc, char** argv) {
   std::string parent_id("1");
 
   bool register_success = greeter.registeruser(user);
+  chirp::Chirp response = greeter.chirp(user, chirp, parent_id);
 
   return 0;
 }

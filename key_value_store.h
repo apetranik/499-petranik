@@ -13,7 +13,6 @@ class KeyValueStore {
  public:
    KeyValueStore();
    virtual ~KeyValueStore();
-
    // get value from key-value store using key. 
    // return true if successful
    std::optional<std::string> Get(const std::string &key);

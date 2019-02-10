@@ -9,21 +9,23 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 
+#include "service.grpc.pb.h"
+#include "data_storage_types.grpc.pb.h"
 
 grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply) {
   std::cout << "Received request: " << std::endl;
   std::cout << "username: " << request->username() << std::endl;
 
+  // serialize user and send to backend
   std::string value;
   chirp::User user;
   user.set_username(request->username());
-  // serialize user and send to backend
   user.SerializeToString(&value); 
   backend_client.SendPutRequest(request->username(), value);
 
   return grpc::Status::OK;
   /* TODO:
-  - create register user request to send to backend_key_value store thru grpc
+  - return more useful status
   */
 }
 
@@ -33,8 +35,14 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
   std::cout << "text: " << request->text() << std::endl;
   std::cout << "parent_id: " << request->parent_id() << std::endl;
 
+  // Get User from backend, update user with new chirp, send to backend to update
+  chirp::User user;
+  std::string current_data = backend_client.SendGetRequest(request->username());
+  user.ParseFromString(current_data);
+
   // construct new Chirp and ChirpReply and set params based on request or fill with default values
   chirp::Chirp *chirp = new chirp::Chirp();
+  chirp = user.add_chirps();
   chirp->set_username(request->username());
   chirp->set_text(request->text());
   chirp->set_parent_id(request->parent_id());
@@ -47,11 +55,16 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
   stamp->set_useconds(useconds);
 
   chirp->set_allocated_timestamp(stamp);
+
+  user.set_username(request->username());
+  user.SerializeToString(&current_data); 
   reply->set_allocated_chirp(chirp);
+
+  backend_client.SendPutRequest(request->username(), current_data);
 
   return grpc::Status::OK;
   /* TODO:
-    - create put request to send chirp to backend_key_value store thru grpc
+    - handle insuccessful chirp
   */
 }
 

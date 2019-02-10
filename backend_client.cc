@@ -9,25 +9,21 @@
 
 #include "key_value_store.grpc.pb.h"
 
-std::vector<std::string> BackendClient::SendGetRequest(const std::vector<std::string> &keys) {
+std::string BackendClient::SendGetRequest(const std::string &key) {
   grpc::ClientContext context;
-
   std::shared_ptr<grpc::ClientReaderWriter<chirp::GetRequest, chirp::GetReply>> stream(stub_->get(&context));
 
-  std::thread write_to_stream([&keys, &stream]() {
-    for (const std::string &key : keys) {
-      chirp::GetRequest request;
-      request.set_key(key);
-      stream->Write(request);
-    }
+  std::thread write_to_stream([&key, &stream]() {
+    chirp::GetRequest request;
+    request.set_key(key);
+    stream->Write(request);
     stream->WritesDone();
   });
 
   chirp::GetReply reply;
-  std::vector<std::string> replies;
-
+  std::string value;
   while (stream->Read(&reply)) {
-    replies.push_back(reply.value());
+      value = reply.value();
   }
 
   write_to_stream.join();
@@ -36,22 +32,22 @@ std::vector<std::string> BackendClient::SendGetRequest(const std::vector<std::st
     - handle failed get requests and successful, but empty replies
     - figure out concurrency
   */
-  return replies; // currently still returns if empty
+  return value;
 }
 
 bool BackendClient::SendPutRequest(const std::string &key, const std::string &value) {
   grpc::ClientContext context;
 
+  // construct PutRequest and send to key value implementation
   chirp::PutRequest request;
   chirp::PutReply reply;
 
   request.set_key(key);
   request.set_value(value);
-  std::cout << "we out here in SendPutRequest()" << std::endl;
+
   grpc::Status status = stub_->put(&context, request, &reply);
 
   if(status.ok()) {
-    std::cout << "status was OK" << std::endl;
     return true;
   }
   /* TODO: 
