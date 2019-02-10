@@ -22,6 +22,7 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
 
   chirp::GetReply reply;
   std::string value;
+  stream->Read(&reply);
   value = reply.value();
 
   write_to_stream.join();

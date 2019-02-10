@@ -29,6 +29,8 @@ grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::Re
 grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequest *request, chirp::ChirpReply *reply) {
   // Get User from backend, update user with new chirp, send to backend to update
   chirp::User user;
+  std::cout << "service - -1" << std::endl;
+
   std::string current_user = backend_client.SendGetRequest(request->username());
   user.ParseFromString(current_user);
 
@@ -44,13 +46,13 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
   chirp::Timestamp *stamp = new chirp::Timestamp();
   stamp->set_seconds(seconds);
   stamp->set_useconds(useconds);
-
   user_chirp->set_allocated_timestamp(stamp);
 
   user.set_username(request->username());
   user.SerializeToString(&current_user); 
-  reply->set_allocated_chirp(user_chirp);
 
+  chirp::Chirp* reply_chirp = reply->mutable_chirp();
+  *reply_chirp = user.chirps(0); // for now can only deal with one string at a time
 
   // Get parent thread
   chirp::ChirpThread thread;

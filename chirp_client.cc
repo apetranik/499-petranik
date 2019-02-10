@@ -45,10 +45,11 @@ chirp::Chirp ChirpClient::chirp(const std::string& user, const std::string& text
   request.set_text(text);
   request.set_parent_id(parent_id);
 
+  grpc::ClientContext context;
+
   // Data from server will be updated here
   chirp::ChirpReply *reply = new chirp::ChirpReply();
 
-  grpc::ClientContext context;
   // RPC call
   grpc::Status status = stub_->chirp(&context, request, reply);
 
@@ -132,8 +133,8 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
 
   // Read reply from stream
   while (reader->Read(&reply)) {
-    LOG(INFO) << "Received chirp back" << std::endl;
-    LOG(INFO) << reply.chirp().username() << std::endl;
+    std::cout << "Received chirp back" << std::endl;
+    std::cout << reply.chirp().username() << std::endl;
   }
 
   grpc::Status status = reader->Finish();
