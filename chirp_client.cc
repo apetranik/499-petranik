@@ -11,6 +11,7 @@
 
 DEFINE_string(user, "default_user", "current user of chirp");
 DEFINE_string(chirp, "default_chirp", "string to chirp out");
+DEFINE_string(reply, "", "string to reply to a given chirp");
 
 bool ChirpClient::registeruser(const std::string& user) {
   // Set request params
@@ -160,8 +161,11 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string user = FLAGS_user;
   std::string chirp = FLAGS_chirp;
-  std::string parent_id("1");
-
+  std::string parent_id = FLAGS_reply;
+  if(parent_id.empty()) {
+    parent_id = "0";
+  }
+  
   bool register_success = greeter.registeruser(user);
   chirp::Chirp response = greeter.chirp(user, chirp, parent_id);
 

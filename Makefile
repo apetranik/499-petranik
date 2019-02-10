@@ -50,9 +50,9 @@ all: backend_server backend_client key_value_store service chirp
 key_value_store: key_value_store.h key_value_store.cc
 	g++ -std=c++17 -c -o key_value_store.o key_value_store.cc
 
-backend_server: backend_server.h backend_server.cc key_value_store.pb.o key_value_store.grpc.pb.o key_value_store
+backend_server: backend_server.h backend_server.cc service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o key_value_store
 	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
-	g++ key_value_store.o backend_server.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
+	g++ key_value_store.o backend_server.o service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
 
 backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_value_store.grpc.pb.o key_value_store
 	g++ -std=c++17 -c -o backend_client.o backend_client.cc
