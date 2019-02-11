@@ -24,7 +24,9 @@ class ChirpClient {
    // Constructs a MonitorRequest and sends to service layer thru grpc and receives a stream MonitorReply back
    chirp::Chirp monitor(const std::string& user);
    // Constructs a ChirpRequest and sends to service layer thru grpc and receives a ChirpReply back
-   chirp::Chirp chirp(const std::string& user, const std::string& text, const std::string& parent_id);  
+   chirp::Chirp chirp(const std::string& user, const std::string& text, const std::string& parent_id); 
+   // prints out chirp thread in a nice format to console 
+   void printChirpThread(std::vector<chirp::Chirp> &reply_chirps);
  private:
   // pointer used to communicate with service layer
   std::unique_ptr<chirp::ServiceLayer::Stub> stub_;
