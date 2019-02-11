@@ -43,7 +43,6 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
   num_chirps_str = std::to_string(num_chirps);
   backend_client.SendPutRequest("num_chirps", num_chirps_str); // add chirp itself
 
-
   // Get User from backend, update user with new chirp, send to backend to update
   chirp::User user;
   std::string current_user = backend_client.SendGetRequest(request->username());
@@ -111,8 +110,8 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
 
   return grpc::Status::OK;
   /* TODO:
-    - if no parent thread, create new
     - handle insuccessful chirp
+    - handle concurrent chirps /replies
   */
 }
 
@@ -134,7 +133,7 @@ grpc::Status Service::follow(grpc::ServerContext *context, const chirp::FollowRe
 
   return grpc::Status::OK;
   /* TODO:
-    - create put request to register user as a follower in backend_key_value store thru grpc
+    - return more useful status
   */
 }
 
@@ -146,7 +145,7 @@ grpc::Status Service::read(grpc::ServerContext *context, const chirp::ReadReques
   reply->mutable_chirps()->CopyFrom(*thread.mutable_replies());
   return grpc::Status::OK;
   /* TODO:
-    - create get request to read chirp and all threads from backend_key_value store thru grpc
+    - handle concurrent reads
   */
 }
 

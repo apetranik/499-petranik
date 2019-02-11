@@ -189,10 +189,9 @@ int main(int argc, char** argv) {
   std::string parent_id = FLAGS_reply;
   std::string read_id = FLAGS_read;
 
-  /*if(!user.empty() && !chirp.empty()) {
+  if(!user.empty() && chirp.empty()) {
     bool register_success = greeter.registeruser(user);
-  }*/
-
+  }
   
   if(!read_id.empty())
   {
@@ -202,6 +201,11 @@ int main(int argc, char** argv) {
   {
     chirp::Chirp response = greeter.chirp(user, chirp, parent_id);
   }
+  /* TODO :
+    - Create functions that handle display (instead of just in main)
+    - read from CLI continuously w/o returning
+    - Handle registration and failures to do another commands when user isn't registered
+  */
   
 
   return 0;
