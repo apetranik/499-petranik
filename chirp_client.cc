@@ -6,12 +6,15 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <grpcpp/grpcpp.h>
+#include <google/protobuf/util/time_util.h>
 
 #include "service.grpc.pb.h"
 
-DEFINE_string(user, "default_user", "current user of chirp");
-DEFINE_string(chirp, "default_chirp", "string to chirp out");
+DEFINE_string(user, "", "current user of chirp");
+DEFINE_string(chirp, "", "string to chirp out");
 DEFINE_string(reply, "", "string to reply to a given chirp");
+DEFINE_string(read, "", "Reads the chirp thread starting at the given id");
+
 
 bool ChirpClient::registeruser(const std::string& user) {
   // Set request params
@@ -98,12 +101,19 @@ bool ChirpClient::read(const std::string& chirp_id) {
   chirp::ReadRequest request;
   request.set_chirp_id(chirp_id);
 
+  grpc::ClientContext context;
+
   // Data from server will be updated here
   chirp::ReadReply reply;
 
-  grpc::ClientContext context;
   // RPC call
   grpc::Status status = stub_->read(&context, request, &reply);
+
+  // copy repeated chirps field into vector (for display)
+  std::vector<chirp::Chirp> reply_chirps;
+  std::copy(reply.chirps().begin(), reply.chirps().end(), std::back_inserter(reply_chirps));
+
+  printChirpThread(reply_chirps); // print out thread to client
 
   // Reply with true if status is ok, else reply false (failure) for now
   if (status.ok()) {
@@ -152,6 +162,20 @@ chirp::Chirp ChirpClient::monitor(const std::string& user) {
   */
 }
 
+void ChirpClient::printChirpThread(std::vector<chirp::Chirp> &reply_chirps) {
+  std::cout << "[" << reply_chirps.at(0).username() << "]" << std::endl;
+  std::cout << "- " << reply_chirps.at(0).text() << std::endl;
+  std::cout << google::protobuf::util::TimeUtil::ToString(google::protobuf::util::TimeUtil::SecondsToTimestamp(reply_chirps.at(0).timestamp().seconds())) << std::endl;
+  std::cout << "----------------------------------" << std::endl;
+  reply_chirps.erase(reply_chirps.begin());
+
+  for(chirp::Chirp chirp : reply_chirps) {
+     std::cout << "\t" << "[" << chirp.username() << "]" << std::endl;
+     std::cout << "\t" << "- " << chirp.text() << std::endl;
+     std::cout << "\t" << google::protobuf::util::TimeUtil::ToString(google::protobuf::util::TimeUtil::SecondsToTimestamp(chirp.timestamp().seconds())) << std::endl;
+     std::cout << "\n";
+  }
+}
 // Instantiate client. It requires a channel, out of which the actual RPCs
 // are created. This channel models a connection to an endpoint (in this case,
 // localhost at port 50000). We indicate that the channel isn't authenticated
@@ -163,12 +187,26 @@ int main(int argc, char** argv) {
   std::string user = FLAGS_user;
   std::string chirp = FLAGS_chirp;
   std::string parent_id = FLAGS_reply;
-  if(parent_id.empty()) {
-    parent_id = "0";
+  std::string read_id = FLAGS_read;
+
+  if(!user.empty() && chirp.empty()) {
+    bool register_success = greeter.registeruser(user);
   }
   
-  bool register_success = greeter.registeruser(user);
-  chirp::Chirp response = greeter.chirp(user, chirp, parent_id);
+  if(!read_id.empty())
+  {
+    bool read = greeter.read(read_id);
+  }
+  if(!chirp.empty())
+  {
+    chirp::Chirp response = greeter.chirp(user, chirp, parent_id);
+  }
+  /* TODO :
+    - Create functions that handle display (instead of just in main)
+    - read from CLI continuously w/o returning
+    - Handle registration and failures to do another commands when user isn't registered
+  */
+  
 
   return 0;
 }
