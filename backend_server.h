@@ -1,5 +1,6 @@
 #include <map>
 #include <string>
+#include <optional>
 
 #include <grpc/grpc.h>
 #include <grpcpp/server.h>

@@ -3,8 +3,10 @@
 #include <vector>
 
 #include <grpcpp/channel.h>
+
 #include "backend_client.h"
 #include "service.grpc.pb.h"
+#include "data_storage_types.grpc.pb.h"
 
 // A backend service to receive requests from client (command line)
 class Service final : public chirp::ServiceLayer::Service {

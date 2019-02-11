@@ -9,35 +9,34 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 
+#include "service.grpc.pb.h"
+#include "data_storage_types.grpc.pb.h"
 
 grpc::Status Service::registeruser(grpc::ServerContext *context, const chirp::RegisterRequest *request, chirp::RegisterReply *reply) {
-  std::cout << "Received request: " << std::endl;
-  std::cout << "username: " << request->username() << std::endl;
-
+  // serialize user and send to backend
   std::string value;
   chirp::User user;
   user.set_username(request->username());
-  // serialize user and send to backend
   user.SerializeToString(&value); 
   backend_client.SendPutRequest(request->username(), value);
 
   return grpc::Status::OK;
   /* TODO:
-  - create register user request to send to backend_key_value store thru grpc
+  - return more useful status
   */
 }
 
 grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequest *request, chirp::ChirpReply *reply) {
-  std::cout << "Received request: " << std::endl;
-  std::cout << "username: " << request->username() << std::endl;
-  std::cout << "text: " << request->text() << std::endl;
-  std::cout << "parent_id: " << request->parent_id() << std::endl;
+  // Get User from backend, update user with new chirp, send to backend to update
+  chirp::User user;
+  std::string current_user = backend_client.SendGetRequest(request->username());
+  user.ParseFromString(current_user);
 
   // construct new Chirp and ChirpReply and set params based on request or fill with default values
-  chirp::Chirp *chirp = new chirp::Chirp();
-  chirp->set_username(request->username());
-  chirp->set_text(request->text());
-  chirp->set_parent_id(request->parent_id());
+  chirp::Chirp *user_chirp = user.add_chirps();
+  user_chirp->set_username(request->username());
+  user_chirp->set_text(request->text());
+  user_chirp->set_parent_id(request->parent_id());
 
   int64_t seconds = google::protobuf::util::TimeUtil::TimestampToSeconds(google::protobuf::util::TimeUtil::GetCurrentTime());
   int64_t useconds = google::protobuf::util::TimeUtil::TimestampToMicroseconds(google::protobuf::util::TimeUtil::GetCurrentTime());
@@ -45,13 +44,43 @@ grpc::Status Service::chirp(grpc::ServerContext *context, const chirp::ChirpRequ
   chirp::Timestamp *stamp = new chirp::Timestamp();
   stamp->set_seconds(seconds);
   stamp->set_useconds(useconds);
+  user_chirp->set_allocated_timestamp(stamp);
 
-  chirp->set_allocated_timestamp(stamp);
-  reply->set_allocated_chirp(chirp);
+  user.set_username(request->username());
+  user.SerializeToString(&current_user); 
+
+  chirp::Chirp* reply_chirp = reply->mutable_chirp();
+  *reply_chirp = user.chirps(0); // for now can only deal with one string at a time
+
+  // Get parent thread
+  chirp::ChirpThread thread;
+  std::string current_thread;
+
+  current_thread = backend_client.SendGetRequest(request->parent_id());
+  thread.ParseFromString(current_thread);
+
+  // construct new Chirp and ChirpReply and set params based on request or fill with default values
+  chirp::Chirp *chirp = thread.add_replies();
+  chirp->set_username(request->username());
+  chirp->set_text(request->text());
+  chirp->set_parent_id(request->parent_id());
+
+  chirp::Timestamp *stamp2 = new chirp::Timestamp();
+  stamp2->set_seconds(seconds);
+  stamp2->set_useconds(useconds);
+
+  chirp->set_allocated_timestamp(stamp2);
+
+  thread.SerializeToString(&current_thread); 
+
+  // Make a put request to the backend 
+  backend_client.SendPutRequest(request->username(), current_user); // associate chirp to user
+  backend_client.SendPutRequest(chirp->parent_id(), current_thread); // add chirp itself
 
   return grpc::Status::OK;
   /* TODO:
-    - create put request to send chirp to backend_key_value store thru grpc
+    - if no parent thread, create new
+    - handle insuccessful chirp
   */
 }
 
@@ -59,6 +88,18 @@ grpc::Status Service::follow(grpc::ServerContext *context, const chirp::FollowRe
   std::cout << "Received request: " << std::endl;
   std::cout << "username: " << request->username() << std::endl;
   std::cout << "user_to_follow: " << request->to_follow() << std::endl;
+
+  // Get User from backend, update user with new person to follow, send to backend to update
+  chirp::User user;
+  std::string current_data = backend_client.SendGetRequest(request->username());
+  user.ParseFromString(current_data);
+
+  // construct new Chirp and ChirpReply and set params based on request or fill with default values
+  user.add_follows(request->to_follow());
+
+  user.SerializeToString(&current_data); 
+  backend_client.SendPutRequest(request->username(), current_data);
+
   return grpc::Status::OK;
   /* TODO:
     - create put request to register user as a follower in backend_key_value store thru grpc

@@ -1,8 +1,10 @@
 #include "backend_server.h"
+#include "key_value_store.h"
 
 #include <map>
 #include <string>
 #include <utility>
+#include <optional>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server.h>
@@ -10,7 +12,6 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 
-#include "key_value_store.h"
 #include "key_value_store.grpc.pb.h"
 
 grpc::Status KeyValueStoreImpl::put(grpc::ServerContext *context, const chirp::PutRequest *request, chirp::PutReply *reply) {
@@ -40,7 +41,6 @@ grpc::Status KeyValueStoreImpl::get(grpc::ServerContext *context, grpc::ServerRe
 
     stream->Write(reply);
   }
-
   return grpc::Status::OK;
 }
 
