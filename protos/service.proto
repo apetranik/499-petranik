@@ -1,8 +1,6 @@
 syntax = "proto3";
 package chirp;
 
-import "google/protobuf/empty.proto";
-
 // Time as given by Linux gettimeofday(). 
 message Timestamp {
  int64 seconds = 1; // Seconds since beginning of UNIX epoch.
