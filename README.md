@@ -30,7 +30,7 @@ Usage: vagrant [options] <command> [<args>]
 
 Create a new directory for this project
 
-- `$ mkdir aliya_petranik_499_chirp && cd aliya_petranik_499_chirp`
+    $ mkdir aliya_petranik_499_chirp && cd aliya_petranik_499_chirp
 
 #### Initialize VM
 
@@ -51,20 +51,37 @@ config.vm.box = "ubuntu/xenial64"
 
 ```
 $ vagrant up
-$ vagrant ssh`
+$ vagrant ssh
 ```
 
 ## Configuring VM for Project
 
 #### Install make
 
-    $ sudo apt install make
+```
+$ sudo apt-get -y update
+$ sudo apt-get -y install build-essential autoconf libtool pkg-config
+$ sudo apt-get -y install clang libc++dev
+$ sudo apt-get -y install make cmake
+```
+
+#### Install GRPC
+
+```
+$ git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
+$ cd grpc
+$ git submodule update --init
+$ make && suod make install
+$ cd third_party/protobuf
+$ make && sudo make install
+$ cd ~
+```
 
 #### Install gflags and glog
 
 ```
-$ sudo apt-get install libgflags-dev
-$ sudo apt install libgoogle-glog-dev
+$ sudo apt-get -y install libgflags-dev
+$ sudo apt-get -y install libgoogle-glog-dev
 ```
 
 ## Getting the Project
@@ -78,7 +95,7 @@ $ make clean && make
 
 Open minimum 4 shells for testing all functionality
 
-- Go to folder with Vagrantfile and use, `vagrant ssh`
+- Go to folder with Vagrantfile and use, `vagrant ssh` as you did the first time
 
 ## Running Project
 
