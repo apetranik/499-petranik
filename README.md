@@ -34,24 +34,24 @@ Create a new directory for this project
 
 #### Initialize VM
 
-`$ vagrant init ubuntu/xenial`
+    $ vagrant init generic/ubuntu1804
 
 - This could create a Vagrantfile in your current directory
 - Check that your Vagrantfile says
 
 ```
-config.vm.box = "ubuntu/xenial64"
+config.vm.box = "generic/ubuntu1804"
 ```
 
 #### Installing a Box
 
-    $ vagrant box add ubuntu/xenial64
+    vagrant box add generic/ubuntu1804
 
 #### Starting up the VM and SSHing in
 
 ```
-$ vagrant up
-$ vagrant ssh
+vagrant up
+vagrant ssh
 ```
 
 ## Configuring VM for Project
@@ -59,38 +59,46 @@ $ vagrant ssh
 #### Install make
 
 ```
-$ sudo apt-get -y update
-$ sudo apt-get -y install build-essential autoconf libtool pkg-config
-$ sudo apt-get -y install clang libc++dev
-$ sudo apt-get -y install make cmake
+sudo apt-get -y update
+sudo apt-get -y install build-essential autoconf libtool pkg-config
+sudo apt-get -y install clang libc++dev
+sudo apt-get install clang-6.0
+sudo apt-get -y install make cmake
 ```
 
 #### Install GRPC
 
 ```
-$ git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
-$ cd grpc
-$ git submodule update --init
-$ make && suod make install
-$ cd third_party/protobuf
-$ make && sudo make install
-$ cd ~
+git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
+cd grpc
+git submodule update --init
+make && sudo make install
+```
+
+_(this takes a while)_
+
+```
+cd third_party/protobuf
+make && sudo make install
+cd ~
 ```
 
 #### Install gflags and glog
 
 ```
-$ sudo apt-get -y install libgflags-dev
-$ sudo apt-get -y install libgoogle-glog-dev
+sudo apt-get -y install libgflags-dev
+sudo apt-get -y install libgoogle-glog-dev
 ```
 
 ## Getting the Project
 
 ```
-$ sudo apt install git
-$ git clone https://github.com/apetranik/499-petranik.git
-$ cd 499-petranik
-$ make clean && make
+sudo apt install git
+git clone https://github.com/apetranik/499-petranik.git
+cd 499-petranik
+git checkout FinalPR-phase1
+git pull origin FinalPR-phase1
+make clean && make
 ```
 
 Open minimum 4 shells for testing all functionality
