@@ -1,6 +1,8 @@
 syntax = "proto3";
 package chirp;
 
+import "google/protobuf/empty.proto";
+
 // Time as given by Linux gettimeofday(). 
 message Timestamp {
  int64 seconds = 1; // Seconds since beginning of UNIX epoch.
@@ -11,8 +13,10 @@ message Chirp {
  string username = 1; // The user who posted this chirp.
  string text = 2; // The contents of the chirp.
  bytes id = 3; // The ID of this chirp.
- bytes parent_id = 4; // The ID, if any, of the chirp this is in reply to. 
+ bytes parent_id = 4; // The ID, if any, of the chirp this is in reply to.
  Timestamp timestamp = 5; // The time this chirp was posted.
+ repeated string child_ids = 7; // The IDs are the children that have replied to 
+ int32 depth = 8;
 }
 
 message RegisterRequest {
@@ -58,8 +62,8 @@ message MonitorReply {
  Chirp chirp = 1; 
 }
 
-message User {
-  string username = 1;
+message Followers {
+  string names = 1;
 }
 
 service ServiceLayer {
@@ -68,4 +72,5 @@ service ServiceLayer {
  rpc follow (FollowRequest) returns (FollowReply) {}
  rpc read (ReadRequest) returns (ReadReply) {}
  rpc monitor (MonitorRequest) returns (stream MonitorReply) {}
+ rpc monitor_check (MonitorRequest) returns (Followers) {}
 }
