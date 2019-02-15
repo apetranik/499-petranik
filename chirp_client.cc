@@ -278,19 +278,25 @@ int main(int argc, char** argv) {
     greeter.read(read_id);
     return 0;
   }
-  if(!chirp.empty())
+  if(!parent_id.empty() && chirp.empty()) {
+    std::cout << "Must specific chirp ID to reply to " << std::endl;
+  }
+  if(!chirp.empty() && !user.empty())
   {
     greeter.chirp(user, chirp, parent_id);
     return 0;
   }
-  if(!follow.empty()) {
+  if(!follow.empty() && !user.empty()) {
      greeter.follow(user, follow);
      return 0;
   }
-  if(monitor)
+  if(monitor && !user.empty())
   {
     greeter.monitor(user);
     return 0;
+  }
+  else {
+    std::cout << "Invalid command" << std::endl;
   }
   return 0;
 }
