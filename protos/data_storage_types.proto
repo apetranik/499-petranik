@@ -1,0 +1,13 @@
+syntax = "proto3";
+package chirp;
+
+import "service.proto";
+
+message User {
+  string username = 1;
+  repeated Chirp chirps = 2;
+  repeated string following = 3;
+  repeated string followers_monitoring = 4;
+  repeated Chirp monitored_chirps = 5;
+
+}
