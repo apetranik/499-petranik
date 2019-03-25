@@ -21,20 +21,20 @@ class ChirpClient {
       : stub_(chirp::ServiceLayer::NewStub(channel)) {}
   // Constructs a RegisterRequest and sends to service layer thru grpc and
   // receives a RegisterReply back
-  void registeruser(const std::string& user);
+  int registeruser(const std::string& user);
   // Constructs a FollowRequest and sends to service layer thru grpc and
   // receives a FollowReply back
-  void follow(const std::string& user, const std::string& user_to_follow);
+  int follow(const std::string& user, const std::string& user_to_follow);
   // Constructs a ReadRequest and sends to service layer thru grpc and receives
   // a ReadReply back
-  void read(const std::string& chirp_id);
+  int read(const std::string& chirp_id);
   // Constructs a MonitorRequest and sends to service layer thru grpc and
   // receives a stream MonitorReply back
-  void monitor(const std::string& user);
+  int monitor(const std::string& user);
   // Constructs a ChirpRequest and sends to service layer thru grpc and receives
   // a ChirpReply back
-  void chirp(const std::string& user, const std::string& text,
-             const std::string& parent_id);
+  int chirp(const std::string& user, const std::string& text,
+            const std::string& parent_id);
   // Helper function - prints out chirp thread in a nice format to console
   void PrintChirpThread(std::vector<chirp::Chirp>& reply_chirps, bool isThread);
   // Helper function - Error chekcing + info for monitor eg( missing user,

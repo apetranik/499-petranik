@@ -8,7 +8,7 @@ DEFINE_string(read, "", "Reads the chirp thread starting at the given id");
 DEFINE_string(follow, "", "Starts following the given username");
 DEFINE_bool(monitor, false, "Streams new tweets from those currently followed");
 
-void ChirpClient::registeruser(const std::string& user) {
+int ChirpClient::registeruser(const std::string& user) {
   grpc::ClientContext context;
   chirp::RegisterRequest request;
   chirp::RegisterReply reply;  // Data from server will be updated here
@@ -24,24 +24,24 @@ void ChirpClient::registeruser(const std::string& user) {
     logging_message = "Failure to register '" + user + "'";
     logging_message += "\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
   // Registration was successful
   if (status.ok()) {
     logging_message = "Successfully registered user: '" + user + "'";
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
-    return;
+    return 0;
   } else {
     logging_message = "Failure to register '" + user + "'";
     logging_message += "\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
 }
 
-void ChirpClient::chirp(const std::string& user, const std::string& text,
-                        const std::string& parent_id) {
+int ChirpClient::chirp(const std::string& user, const std::string& text,
+                       const std::string& parent_id) {
   grpc::ClientContext context;
   chirp::ChirpRequest request;
   chirp::ChirpReply* reply =
@@ -59,7 +59,7 @@ void ChirpClient::chirp(const std::string& user, const std::string& text,
   if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
     logging_message = "Failed chirp\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
   // Chirp was successful
   if (status.ok()) {
@@ -72,18 +72,18 @@ void ChirpClient::chirp(const std::string& user, const std::string& text,
     }
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
-    return;
+    return 0;
   }
   // Other failure
   else {
     logging_message = "Failed chirp\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
 }
 
-void ChirpClient::follow(const std::string& user,
-                         const std::string& user_to_follow) {
+int ChirpClient::follow(const std::string& user,
+                        const std::string& user_to_follow) {
   grpc::ClientContext context;
   chirp::FollowRequest request;
   chirp::FollowReply reply;  // Data from server will be updated here
@@ -99,13 +99,13 @@ void ChirpClient::follow(const std::string& user,
   if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
     logging_message = "Failed follow\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
   // User is already following user to follow
   if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
     logging_message = "Failed follow\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
   // Follow was successful
   if (status.ok()) {
@@ -113,17 +113,17 @@ void ChirpClient::follow(const std::string& user,
         "user: '" + user + "' successfully followed '" + user_to_follow + "'";
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
-    return;
+    return 0;
   }
   // other error
   else {
     logging_message = "Failed follow\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
 }
 
-void ChirpClient::read(const std::string& chirp_id) {
+int ChirpClient::read(const std::string& chirp_id) {
   grpc::ClientContext context;
   chirp::ReadRequest request;
   chirp::ReadReply reply;  // Data from server will be updated here
@@ -139,7 +139,7 @@ void ChirpClient::read(const std::string& chirp_id) {
     logging_message =
         "Failure to read ID: " + chirp_id + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
   // Read was successful, print out thread
   if (status.ok()) {
@@ -147,18 +147,18 @@ void ChirpClient::read(const std::string& chirp_id) {
     std::copy(reply.chirps().begin(), reply.chirps().end(),
               std::back_inserter(reply_chirps));
     PrintChirpThread(reply_chirps, true);
-    return;
+    return 0;
   }
   // Other failure
   else {
     logging_message =
         "Failure to read ID: " + chirp_id + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
 }
 
-void ChirpClient::monitor(const std::string& user) {
+int ChirpClient::monitor(const std::string& user) {
   grpc::ClientContext context;
   chirp::MonitorRequest request;
   chirp::MonitorReply reply;  // Data from service layer will be updated here
@@ -166,7 +166,7 @@ void ChirpClient::monitor(const std::string& user) {
   request.set_username(user);
   // error check and give info to user about followers
   if (!CheckMonitorInfo(user)) {
-    return;  // return if monitoring check failed and monitoring will fail
+    return 1;  // return if monitoring check failed and monitoring will fail
   }
 
   std::unique_ptr<grpc::ClientReader<chirp::MonitorReply> > reader(
@@ -189,13 +189,13 @@ void ChirpClient::monitor(const std::string& user) {
     logging_message = "Monitoring ended\n" + status.error_message();
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
-    return;
+    return 0;
   }
   // Other
   else {
     logging_message = "Monitoring stopped\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return;
+    return 1;
   }
 }
 
@@ -301,12 +301,10 @@ int main(int argc, char** argv) {
   bool monitor = FLAGS_monitor;
 
   if (!register_user.empty()) {
-    greeter.registeruser(register_user);
-    return 0;
+    return greeter.registeruser(register_user);
   }
   if (!read_id.empty()) {
-    greeter.read(read_id);
-    return 0;
+    return greeter.read(read_id);
   }
   if (!parent_id.empty() && chirp.empty()) {
     LOG(WARNING)
@@ -316,19 +314,15 @@ int main(int argc, char** argv) {
   }
   if (!user.empty()) {
     if (!chirp.empty()) {
-      greeter.chirp(user, chirp, parent_id);
-      return 0;
+      return greeter.chirp(user, chirp, parent_id);
     }
     if (!follow.empty()) {
-      greeter.follow(user, follow);
-      return 0;
+      return greeter.follow(user, follow);
     }
     if (monitor) {
-      greeter.monitor(user);
-      return 0;
+      return greeter.monitor(user);
     }
-  } else {
-    LOG(ERROR) << "\nInvalid command" << std::endl;
   }
-  return 0;
+  LOG(ERROR) << "\nInvalid command" << std::endl;
+  return 1;
 }
