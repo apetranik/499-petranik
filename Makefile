@@ -16,7 +16,7 @@
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-CXX = g++
+CXX = g++ -std=c++17
 CPPFLAGS += `pkg-config --cflags protobuf grpc`
 CXXFLAGS += -std=c++17
 ifeq ($(SYSTEM),Darwin)
@@ -45,56 +45,20 @@ vpath %.proto $(PROTOS_PATH)
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
-all: backend_server backend_client key_value_store service chirp 
+all: run_server run_service chirp
 
-key_value_store: key_value_store.h key_value_store.cc
-	g++ -std=c++17 -c -o key_value_store.o key_value_store.cc
+run_server: key_value_store.pb.o key_value_store.grpc.pb.o backend_server.o key_value_store.o run_server.o
+	$(CXX) $^ $(LDFLAGS) -o $@
 
-backend_server: backend_server.h backend_server.cc service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o key_value_store
-	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
-	g++ key_value_store.o backend_server.o service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
+run_service: service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o service.o backend_client.o run_service.o
+	$(CXX) $^ $(LDFLAGS) -o $@
 
-backend_client: backend_client.h backend_client.cc key_value_store.pb.o key_value_store.grpc.pb.o key_value_store
-	g++ -std=c++17 -c -o backend_client.o backend_client.cc
-
-service: service.h service.cc service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o backend_client
-	g++ -std=c++17 `pkg-config --cflags protobuf grpc` -c -o service.o service.cc
-	g++ backend_client.o service.o service.grpc.pb.o service.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o service
-
-chirp: chirp_client.h chirp_client.cc service.pb.o service.grpc.pb.o chirp
+chirp: service.pb.o service.grpc.pb.o chirp_client.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h service chirp backend_server backend_client key_value_store
-
-
-# key_value_store: key_value_store.h key_value_store.cc
-# 	g++ -std=c++11 -c -o key_value_store.o backend_data_structure.cc
-
-# backend_server: backend_server.h backend_server.cc key_value_store.pb.o key_value_store.grpc.pb.o key_value_store
-# 	g++ -std=c++11 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
-# 	g++ key_value_store.o backend_server.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
-
-# client: client.h client.cc service.pb.o service.grpc.pb.o client
-# 	g++ -std=c++11 `pkg-config --cflags protobuf grpc` -c -o backend_server.o backend_server.cc
-# 	g++ key_value_store.o backend_server.o key_value_store.pb.o key_value_store.grpc.pb.o -L/usr/local/lib `pkg-config --libs protobuf grpc++` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -o backend_server
-
-
-# client: service.pb.o service.grpc.pb.o client.o
-# 	$(CXX) $^ $(LDFLAGS) -o $@
-
-# .PRECIOUS: %.grpc.pb.cc
-# %.grpc.pb.cc: %.proto
-# 	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
-
-# .PRECIOUS: %.pb.cc
-# %.pb.cc: %.proto
-# 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
-
-# clean:
-# 	rm -f *.o *.pb.cc *.pb.h service backend_server
-
-
+	rm -f *.o *.pb.cc *.pb.h run_server run_service chirp
+	
 # The following is to test your system and ensure a smoother experience.
 # They are by no means necessary to actually compile a grpc-enabled software.
 

@@ -1,17 +1,9 @@
 #include "backend_client.h"
-#include <iostream>
-#include <memory>
-#include <string>
-#include <thread>
-
-#include <gflags/gflags.h>
-#include <grpcpp/grpcpp.h>
-
-#include "key_value_store.grpc.pb.h"
 
 std::string BackendClient::SendGetRequest(const std::string &key) {
   grpc::ClientContext context;
-  std::shared_ptr<grpc::ClientReaderWriter<chirp::GetRequest, chirp::GetReply>> stream(stub_->get(&context));
+  std::shared_ptr<grpc::ClientReaderWriter<chirp::GetRequest, chirp::GetReply>>
+      stream(stub_->get(&context));
 
   // write request to stream
   std::thread write_to_stream([&key, &stream]() {
@@ -33,7 +25,8 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
   return value;
 }
 
-bool BackendClient::SendPutRequest(const std::string &key, const std::string &value) {
+bool BackendClient::SendPutRequest(const std::string &key,
+                                   const std::string &value) {
   grpc::ClientContext context;
 
   // construct PutRequest and send to backend
@@ -45,7 +38,7 @@ bool BackendClient::SendPutRequest(const std::string &key, const std::string &va
 
   grpc::Status status = stub_->put(&context, request, &reply);
 
-  if(status.ok()) {
+  if (status.ok()) {
     return true;
   }
 
@@ -62,9 +55,9 @@ bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
 
   grpc::Status status = stub_->deletekey(&context, request, &reply);
 
-  if(status.ok()) {
+  if (status.ok()) {
     return true;
   }
-  
+
   return false;
 }

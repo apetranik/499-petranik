@@ -1,11 +1,5 @@
 #include "key_value_store.h"
 
-#include <optional>
-#include <functional>
-#include <string>
-#include <vector>
-#include <iostream>
-
 KeyValueStore::KeyValueStore() : key_value_store_() {}
 
 KeyValueStore::~KeyValueStore() {}
@@ -16,9 +10,8 @@ std::optional<std::string> KeyValueStore::Get(const std::string &key) {
   if (it != key_value_store_.end()) {
     if (!it->second.empty()) {
       return it->second;
-    } 
-  }
-  else {
+    }
+  } else {
     return {};
   }
 }
