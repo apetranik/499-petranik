@@ -36,7 +36,8 @@ class ChirpClient {
   int chirp(const std::string& user, const std::string& text,
             const std::string& parent_id);
   // Helper function - prints out chirp thread in a nice format to console
-  void PrintChirpThread(std::vector<chirp::Chirp>& reply_chirps, bool isThread);
+  void PrintChirpThread(const std::vector<chirp::Chirp>& reply_chirps,
+                        bool isThread);
   // Helper function - Error chekcing + info for monitor eg( missing user,
   // following no one, who they follow)
   bool CheckMonitorInfo(const std::string& user);

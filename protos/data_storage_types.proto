@@ -9,5 +9,4 @@ message User {
   repeated string following = 3;
   repeated string followers_monitoring = 4;
   repeated Chirp monitored_chirps = 5;
-
 }

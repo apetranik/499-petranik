@@ -18,7 +18,6 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
   std::string value;
   stream->Read(&reply);
   value = reply.value();
-
   write_to_stream.join();
   grpc::Status status = stream->Finish();
 
@@ -28,36 +27,27 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
 bool BackendClient::SendPutRequest(const std::string &key,
                                    const std::string &value) {
   grpc::ClientContext context;
-
-  // construct PutRequest and send to backend
-  chirp::PutRequest request;
+  chirp::PutRequest request;  // construct PutRequest and send to backend
   chirp::PutReply reply;
 
   request.set_key(key);
   request.set_value(value);
-
   grpc::Status status = stub_->put(&context, request, &reply);
-
   if (status.ok()) {
     return true;
   }
-
   return false;
 }
 
 bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
   grpc::ClientContext context;
-
   chirp::DeleteRequest request;
   chirp::DeleteReply reply;
 
   request.set_key(key);
-
   grpc::Status status = stub_->deletekey(&context, request, &reply);
-
   if (status.ok()) {
     return true;
   }
-
   return false;
 }

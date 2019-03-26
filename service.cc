@@ -42,13 +42,8 @@ grpc::Status Service::chirp(grpc::ServerContext *context,
   // User does exist, so allow them to chirp
   // Create new chirp ID based on current number of chirps
   std::string num_chirps_str = backend_client_.SendGetRequest("num_chirps");
-  int num_chirps;
-  if (num_chirps_str.empty()) {
-    num_chirps = 1;  // first chirp in system
-  } else {
-    num_chirps = std::stoi(num_chirps_str);
-    ++num_chirps;
-  }
+  int num_chirps = std::stoi(num_chirps_str);
+  ++num_chirps;
   num_chirps_str = std::to_string(num_chirps);
   backend_client_.SendPutRequest("num_chirps",
                                  num_chirps_str);  // update new chirp count

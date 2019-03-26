@@ -1,6 +1,8 @@
 #include "key_value_store.h"
 
-KeyValueStore::KeyValueStore() : key_value_store_() {}
+KeyValueStore::KeyValueStore() : key_value_store_() {
+  key_value_store_["num_chirps"] = "0";
+}
 
 KeyValueStore::~KeyValueStore() {}
 

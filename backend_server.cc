@@ -13,7 +13,9 @@ grpc::Status KeyValueStoreImpl::put(grpc::ServerContext *context,
   if (success) {
     return grpc::Status::OK;
   } else {
-    return grpc::Status(grpc::UNKNOWN, "Unknown error", "");
+    return grpc::Status(
+        grpc::FAILED_PRECONDITION,
+        "Failed to complete Put request - check that run_server is running");
   }
 }
 
@@ -22,9 +24,8 @@ grpc::Status KeyValueStoreImpl::get(
     grpc::ServerReaderWriter<chirp::GetReply, chirp::GetRequest> *stream) {
   chirp::GetRequest request;
 
+  chirp::GetReply reply;
   while (stream->Read(&request)) {
-    chirp::GetReply reply;
-
     // gets value from optional or if returned {} save an empty reply
     auto optional_reply = key_value_store_.Get(request.key()).value_or("");
     reply.set_value(optional_reply);
@@ -47,6 +48,6 @@ grpc::Status KeyValueStoreImpl::deletekey(grpc::ServerContext *context,
   if (success) {
     return grpc::Status::OK;
   } else {
-    return grpc::Status(grpc::NOT_FOUND, "Unknown error", "");
+    return grpc::Status(grpc::NOT_FOUND, "Failed to delete user");
   }
 }

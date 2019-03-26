@@ -18,7 +18,6 @@ class KeyValueStore {
   // puts new key,value or updates value in store
   // return true in successful
   bool Put(const std::string &key, const std::string &value);
-
   // deletes key,value from store
   // return true in successful
   bool Del(const std::string &key);

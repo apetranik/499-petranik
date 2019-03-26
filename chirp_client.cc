@@ -44,15 +44,14 @@ int ChirpClient::chirp(const std::string& user, const std::string& text,
                        const std::string& parent_id) {
   grpc::ClientContext context;
   chirp::ChirpRequest request;
-  chirp::ChirpReply* reply =
-      new chirp::ChirpReply();  // Data from server will be updated here
+  chirp::ChirpReply reply;
 
   request.set_username(user);
   request.set_text(text);
   request.set_parent_id(parent_id);
 
   // RPC call
-  grpc::Status status = stub_->chirp(&context, request, reply);
+  grpc::Status status = stub_->chirp(&context, request, &reply);
 
   std::string logging_message;
   // User doesn't exist or reply ID doesnt exist so chirp failed
@@ -64,11 +63,11 @@ int ChirpClient::chirp(const std::string& user, const std::string& text,
   // Chirp was successful
   if (status.ok()) {
     logging_message = "user: '" + user + "' successfully chirped '" +
-                      reply->chirp().text() + "' (ID: " + reply->chirp().id() +
+                      reply.chirp().text() + "' (ID: " + reply.chirp().id() +
                       ")";
 
-    if (!reply->chirp().parent_id().empty()) {
-      logging_message += "\nReplied to ID: " + reply->chirp().parent_id();
+    if (!reply.chirp().parent_id().empty()) {
+      logging_message += "\nReplied to ID: " + reply.chirp().parent_id();
     }
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
@@ -137,7 +136,7 @@ int ChirpClient::read(const std::string& chirp_id) {
   // Chirp ID was not found in key value store
   if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
     logging_message =
-        "Failure to read ID: " + chirp_id + status.error_message();
+        "Failure to read ID: " + chirp_id + "\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
     return 1;
   }
@@ -152,7 +151,7 @@ int ChirpClient::read(const std::string& chirp_id) {
   // Other failure
   else {
     logging_message =
-        "Failure to read ID: " + chirp_id + status.error_message();
+        "Failure to read ID: " + chirp_id + "\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
     return 1;
   }
@@ -232,8 +231,8 @@ bool ChirpClient::CheckMonitorInfo(const std::string& user) {
   }
 }
 
-void ChirpClient::PrintChirpThread(std::vector<chirp::Chirp>& reply_chirps,
-                                   bool isThread) {
+void ChirpClient::PrintChirpThread(
+    const std::vector<chirp::Chirp>& reply_chirps, bool isThread) {
   // only need to print one chirp
   std::string thread_string = "";
   if (!isThread) {
@@ -287,8 +286,8 @@ void ChirpClient::PrintChirpThread(std::vector<chirp::Chirp>& reply_chirps,
 // localhost at port 50000). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
 int main(int argc, char** argv) {
-  ChirpClient greeter(grpc::CreateChannel("localhost:50000",
-                                          grpc::InsecureChannelCredentials()));
+  ChirpClient chirp_client(grpc::CreateChannel(
+      "localhost:50000", grpc::InsecureChannelCredentials()));
   google::SetLogDestination(google::GLOG_INFO, "logs/");
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -301,10 +300,10 @@ int main(int argc, char** argv) {
   bool monitor = FLAGS_monitor;
 
   if (!register_user.empty()) {
-    return greeter.registeruser(register_user);
+    return chirp_client.registeruser(register_user);
   }
   if (!read_id.empty()) {
-    return greeter.read(read_id);
+    return chirp_client.read(read_id);
   }
   if (!parent_id.empty() && chirp.empty()) {
     LOG(WARNING)
@@ -314,13 +313,13 @@ int main(int argc, char** argv) {
   }
   if (!user.empty()) {
     if (!chirp.empty()) {
-      return greeter.chirp(user, chirp, parent_id);
+      return chirp_client.chirp(user, chirp, parent_id);
     }
     if (!follow.empty()) {
-      return greeter.follow(user, follow);
+      return chirp_client.follow(user, follow);
     }
     if (monitor) {
-      return greeter.monitor(user);
+      return chirp_client.monitor(user);
     }
   }
   LOG(ERROR) << "\nInvalid command" << std::endl;

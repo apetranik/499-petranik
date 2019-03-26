@@ -7,9 +7,8 @@
 #include "backend_server.h"
 
 void run_server() {
-  std::string server_address("0.0.0.0:50002");
+  const std::string server_address("0.0.0.0:50002");
   KeyValueStoreImpl service;
-
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
@@ -20,6 +19,5 @@ void run_server() {
 
 int main(int argc, char **argv) {
   run_server();
-
   return 0;
 }
