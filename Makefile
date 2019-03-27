@@ -29,6 +29,7 @@ LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++ grpc`\
            -ldl\
            -lgflags\
            -lglog\
+					 -lgtest\
 
 endif
 PROTOC = protoc
@@ -45,7 +46,7 @@ vpath %.proto $(PROTOS_PATH)
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
-all: run_server run_service chirp
+all: run_server run_service chirp key_value_store_unit_tests
 
 run_server: key_value_store.pb.o key_value_store.grpc.pb.o backend_server.o key_value_store.o run_server.o
 	$(CXX) $^ $(LDFLAGS) -o $@
@@ -56,9 +57,12 @@ run_service: service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store
 chirp: service.pb.o service.grpc.pb.o chirp_client.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+key_value_store_unit_tests: ./tests/key_value_store_unit_tests.o key_value_store.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 clean:
 	rm -f *.o *.pb.cc *.pb.h run_server run_service chirp
-	
+
 # The following is to test your system and ensure a smoother experience.
 # They are by no means necessary to actually compile a grpc-enabled software.
 

@@ -1,8 +1,6 @@
 #include "key_value_store.h"
 
-KeyValueStore::KeyValueStore() : key_value_store_() {
-  key_value_store_["num_chirps"] = "0";  // initalize to 0
-}
+KeyValueStore::KeyValueStore() : key_value_store_() {}
 
 KeyValueStore::~KeyValueStore() {}
 
@@ -12,7 +10,7 @@ std::optional<std::string> KeyValueStore::Get(const std::string &key) {
   if (it != key_value_store_.end()) {
     return it->second;
   } else {
-    return {};
+    return "[empty_key]";
   }
 }
 

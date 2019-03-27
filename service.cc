@@ -156,7 +156,6 @@ grpc::Status Service::follow(grpc::ServerContext *context,
   user.add_following(request->to_follow());  // add as follower
   user.SerializeToString(&user_exists);
   backend_client_.SendPutRequest(request->username(), user_exists);
-
   return grpc::Status::OK;
 }
 

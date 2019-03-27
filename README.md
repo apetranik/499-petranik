@@ -83,11 +83,13 @@ make && sudo make install
 cd ~
 ```
 
-#### Install gflags and glog
+#### Install gflags and glog and gtest
 
 ```
 sudo apt-get -y install libgflags-dev
 sudo apt-get -y install libgoogle-glog-dev
+sudo apt-get -y install libgtest-dev
+sudo apt-get install cmake cd /usr/src/gtest sudo cmake CMakeLists.txt sudo make sudo cp *.a /usr/lib
 ```
 
 ## Getting the Project
@@ -111,13 +113,13 @@ _Both backend and service must be running to use chirp CLI_
 
 #### Start backend:
 
-    $ ./backend_server
+    $ ./run_server
 
 - Note: closing this will resete key value store
 
 #### Start service layer:
 
-    $ ./service
+    $ ./run_service
 
 - Note: if you quit the service layer, the backend key-value store will still be saved
 
@@ -151,3 +153,8 @@ _Both backend and service must be running to use chirp CLI_
   ### **Monitor**
 
       $ ./chirp --user <username> --monitor
+
+#### Run Tests:
+
+    $ ./key_value_store_unit_tests
+    $ ./service_layer_unit_tests
