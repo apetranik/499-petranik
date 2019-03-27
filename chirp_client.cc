@@ -32,11 +32,6 @@ int ChirpClient::registeruser(const std::string& user) {
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
     return 0;
-  } else {
-    logging_message = "Failure to register '" + user + "'";
-    logging_message += "\n" + status.error_message();
-    LOG(ERROR) << "\n" << logging_message << std::endl;
-    return 1;
   }
 }
 
@@ -73,12 +68,6 @@ int ChirpClient::chirp(const std::string& user, const std::string& text,
     LOG(INFO) << logging_message << std::endl;
     return 0;
   }
-  // Other failure
-  else {
-    logging_message = "Failed chirp\n" + status.error_message();
-    LOG(ERROR) << "\n" << logging_message << std::endl;
-    return 1;
-  }
 }
 
 int ChirpClient::follow(const std::string& user,
@@ -101,7 +90,7 @@ int ChirpClient::follow(const std::string& user,
     return 1;
   }
   // User is already following user to follow
-  if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
+  if (status.error_code() == grpc::StatusCode::ALREADY_EXISTS) {
     logging_message = "Failed follow\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
     return 1;
@@ -113,12 +102,6 @@ int ChirpClient::follow(const std::string& user,
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
     return 0;
-  }
-  // other error
-  else {
-    logging_message = "Failed follow\n" + status.error_message();
-    LOG(ERROR) << "\n" << logging_message << std::endl;
-    return 1;
   }
 }
 
@@ -205,7 +188,8 @@ bool ChirpClient::CheckMonitorInfo(const std::string& user) {
 
   // Check user info for monitoring
   chirp::Followers reply;
-  grpc::Status status = stub_->monitor_check(&context, request, &reply);
+  grpc::Status status =
+      stub_->validate_monitor_request(&context, request, &reply);
 
   std::string logging_message;
   // User doesn't exist
@@ -255,7 +239,7 @@ void ChirpClient::PrintChirpThread(
   else {
     std::string tab = "\t";
     std::string total_tabs = "";
-    for (chirp::Chirp chirp : reply_chirps) {
+    for (const chirp::Chirp chirp : reply_chirps) {
       total_tabs = "";
 
       for (int i = 1; i < chirp.depth(); ++i) {

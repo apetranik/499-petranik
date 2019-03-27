@@ -102,7 +102,7 @@ grpc::Status Service::chirp(grpc::ServerContext *context,
   chirp::User monitoring_user;
 
   // iterate thru all currently monitoring users and give them new chirp
-  for (std::string username : monitoring_users_serialized) {
+  for (const std::string username : monitoring_users_serialized) {
     monitoring_user_serialized =
         backend_client_.SendGetRequest(username);  // Get follower
     monitoring_user.ParseFromString(monitoring_user_serialized);
@@ -147,7 +147,7 @@ grpc::Status Service::follow(grpc::ServerContext *context,
             std::back_inserter(currently_following));
 
   // don't follow someone more than once
-  for (std::string following : currently_following) {
+  for (const std::string following : currently_following) {
     if (following == request->to_follow()) {
       return grpc::Status(grpc::StatusCode::ALREADY_EXISTS,
                           "Already following");
@@ -184,7 +184,7 @@ void Service::ThreadDFS(chirp::ReadReply *reply, std::string chirp_id,
   }
 
   // loop thru child chirps
-  for (std::string child_chirp : children_chirps_serialized) {
+  for (const std::string child_chirp : children_chirps_serialized) {
     ThreadDFS(reply, child_chirp, chirp.depth() + 1);
   }
 }
@@ -206,124 +206,128 @@ grpc::Status Service::read(grpc::ServerContext *context,
   ThreadDFS(reply, request->chirp_id(), 1);
   return grpc::Status::OK;
 }
+// Helper function for Monitor
+void Service::register_monitoring_user(
+    chirp::User &user, std::vector<std::string> &followed_by_user,
+    const std::string &username) {
+  std::lock_guard<std::mutex> guard(mutex_);
 
+  // Get all users the current user is following
+  user.ParseFromString(backend_client_.SendGetRequest(username));
+  std::copy(user.following().begin(), user.following().end(),
+            std::back_inserter(followed_by_user));
+
+  // register user as 'monitoring' w/ every person they are following
+  for (const std::string followed : followed_by_user) {
+    chirp::User followed_user;
+    followed_user.ParseFromString(backend_client_.SendGetRequest(followed));
+
+    // Reject repeat follow attempts
+    bool alreadyFollowing = false;
+    for (const std::string currently_following :
+         followed_user.followers_monitoring()) {
+      if (currently_following == user.username()) {
+        alreadyFollowing = true;
+      }
+    }
+    // If not already a follower, add and save to backend
+    if (!alreadyFollowing) {
+      std::string *new_monitoring_follower =
+          followed_user.add_followers_monitoring();
+      *new_monitoring_follower = user.username();
+      std::string followed_user_serialized;
+      followed_user.SerializeToString(&followed_user_serialized);
+      backend_client_.SendPutRequest(followed, followed_user_serialized);
+    }
+  }
+}
+// Helper function for monitor
+void Service::terminate_monitor(chirp::User &user,
+                                std::vector<std::string> &followed_by_user,
+                                const std::string &username) {
+  user.clear_monitored_chirps();
+  // Remove user as currently monitoring from the people they follow
+  for (const std::string followed_username : followed_by_user) {
+    // Remove all monitoring followers
+    chirp::User followed_user;
+    followed_user.ParseFromString(backend_client_.SendGetRequest(username));
+    std::vector<std::string> followers_monitoring;
+    std::copy(followed_user.followers_monitoring().begin(),
+              followed_user.followers_monitoring().end(),
+              std::back_inserter(followers_monitoring));
+    followed_user.clear_followers_monitoring();
+
+    // Add back all montoring followers except the current user (who
+    // cancelled)
+    for (const std::string current_follower : followers_monitoring) {
+      if (username != current_follower) {
+        std::string *current_monitoring_follower =
+            followed_user.add_followers_monitoring();
+        *current_monitoring_follower = current_follower;
+      }
+    }
+    std::string users_monitoring;
+    followed_user.SerializeToString(&users_monitoring);
+    backend_client_.SendPutRequest(
+        followed_username,
+        users_monitoring);  // save back all users still monitoring
+  }
+}
+// Helper function for monitor
+void Service::stream_new_chirps(chirp::User &user,
+                                grpc::ServerWriter<chirp::MonitorReply> *stream,
+                                chirp::MonitorReply &reply) {
+  std::vector<chirp::Chirp> new_chirps;  // filled with new chirps
+  std::move(user.monitored_chirps().begin(), user.monitored_chirps().end(),
+            std::back_inserter(new_chirps));
+
+  // get all new chirps since last check and write to stream
+  for (const chirp::Chirp chirp : new_chirps) {
+    chirp::Chirp *c = reply.mutable_chirp();
+    *c = chirp;
+    stream->Write(reply);
+  }
+}
 grpc::Status Service::monitor(grpc::ServerContext *context,
                               const chirp::MonitorRequest *request,
                               grpc::ServerWriter<chirp::MonitorReply> *stream) {
   chirp::MonitorReply reply;
+  chirp::User user;                           // User who is monitoring
+  std::vector<std::string> followed_by_user;  // List of users followed by user
 
-  std::vector<std::string> following;  // all people user is currently following
-  std::string followed_user_serialized;
-  chirp::User user;  // user who requested to monitor
-
-  {
-    std::lock_guard<std::mutex> guard(mutex_);  // acquire lock
-
-    std::string current_user =
-        backend_client_.SendGetRequest(request->username());
-    user.ParseFromString(current_user);
-    // Get all users the current user is following
-    std::copy(user.following().begin(), user.following().end(),
-              std::back_inserter(following));
-    std::vector<chirp::User> monitoring_users;
-
-    // register user as 'monitoring' w/ every person they are following
-    for (std::string followed : following) {
-      chirp::User followed_user;
-      followed_user_serialized = backend_client_.SendGetRequest(followed);
-      followed_user.ParseFromString(followed_user_serialized);
-
-      // Reject repeat follow attempts
-      bool alreadyFollowing = false;
-      for (std::string currently_following :
-           followed_user.followers_monitoring()) {
-        if (currently_following == user.username()) {
-          alreadyFollowing = true;
-        }
-      }
-      // If not already a follower, add and save to backend
-      if (!alreadyFollowing) {
-        std::string *new_monitoring_follower =
-            followed_user.add_followers_monitoring();
-        *new_monitoring_follower = user.username();
-        followed_user.SerializeToString(&followed_user_serialized);
-        backend_client_.SendPutRequest(followed, followed_user_serialized);
-      }
-    }
-  }
+  // Register user as monitoring with everyone they follow
+  register_monitoring_user(user, followed_by_user, request->username());
 
   // Continously monitor for new chirps
-  std::string updated_user;  // used to make sure we don't keep printing the
-                             // same new chirps over and over
-  std::string current_user;
-  std::vector<chirp::Chirp> monitored_chirps;
-
+  std::string updated_user;  // updated w/ new incoming chirps
+  std::string current_user;  // current serialized state of user
   while (true) {
-    // If user pressed ^c, remove user as monitoring from all users followed and
-    // clear all current cached chirps
+    // Execute interrupted w/ ^c, clear all cached chirps & remove user as
+    // monitoring from all people they follow
     if (context->IsCancelled()) {
-      user.clear_monitored_chirps();
-      user.SerializeToString(&updated_user);
-
-      // remove self as currently monitoring
-      for (std::string followed : following) {
-        chirp::User followed_user;
-        followed_user_serialized = backend_client_.SendGetRequest(followed);
-        followed_user.ParseFromString(followed_user_serialized);
-
-        std::vector<std::string> followers_monitoring;
-        std::copy(followed_user.followers_monitoring().begin(),
-                  followed_user.followers_monitoring().end(),
-                  std::back_inserter(followers_monitoring));
-        followed_user.clear_followers_monitoring();
-
-        // add back all monitoring followers for a user being monitored, except
-        // the current user who just cancelled the monitor
-        for (std::string current_follower : followers_monitoring) {
-          if (request->username() != current_follower) {
-            std::string *current_monitoring_follower =
-                followed_user.add_followers_monitoring();
-            *current_monitoring_follower = current_follower;
-          }
-        }
-
-        followed_user.SerializeToString(&followed_user_serialized);
-        backend_client_.SendPutRequest(
-            followed, followed_user_serialized);  // save user as currently
-                                                  // monitoring follower
-      }
+      terminate_monitor(user, followed_by_user, request->username());
       return grpc::Status::CANCELLED;
     }
-    // Else user did not cancel, so continue monitor
+
+    // Continue to monitor
     updated_user = backend_client_.SendGetRequest(request->username());
-    user.ParseFromString(updated_user);
 
-    // new chirp from follower has occured since last iteration
+    // New chirp arrived in user's monitored chirps
     if (updated_user != current_user) {
-      monitored_chirps.clear();
-      std::move(user.monitored_chirps().begin(), user.monitored_chirps().end(),
-                std::back_inserter(monitored_chirps));
-
-      // get all new chirps and write to stream
-      for (chirp::Chirp chirp : monitored_chirps) {
-        chirp::Chirp *c = reply.mutable_chirp();
-        *c = chirp;
-        stream->Write(reply);
-      }
+      user.ParseFromString(updated_user);
+      stream_new_chirps(user, stream, reply);  // write to stream
+      // Now that new chirps have been written to stream, clear from user
       user.clear_monitored_chirps();
       user.SerializeToString(&current_user);
-      backend_client_.SendPutRequest(
-          user.username(), current_user);  // make sure to clear chirps so we
-                                           // don't print more than once
+      backend_client_.SendPutRequest(user.username(), current_user);
     }
   }
-
   return grpc::Status::OK;
 }
 
-grpc::Status Service::monitor_check(grpc::ServerContext *context,
-                                    const chirp::MonitorRequest *request,
-                                    chirp::Followers *reply) {
+grpc::Status Service::validate_monitor_request(
+    grpc::ServerContext *context, const chirp::MonitorRequest *request,
+    chirp::Followers *reply) {
   // check if user who is trying to monitor exists in key value store
   std::string user_exists = backend_client_.SendGetRequest(request->username());
   if (user_exists.empty()) {
@@ -337,7 +341,7 @@ grpc::Status Service::monitor_check(grpc::ServerContext *context,
   // them know
   if (user.following().empty()) {
     return grpc::Status(grpc::StatusCode::UNIMPLEMENTED,
-                        "not following anyone");
+                        "Not following anyone");
   }
 
   // Tell user who they are currently following
@@ -347,7 +351,7 @@ grpc::Status Service::monitor_check(grpc::ServerContext *context,
               std::back_inserter(following_users));
     // construct msg with current users you are followering
     std::string msg;
-    for (std::string user : following_users) {
+    for (const std::string user : following_users) {
       msg += "'";
       msg += user;
       msg += "'";

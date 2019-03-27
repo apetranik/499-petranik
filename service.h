@@ -41,15 +41,28 @@ class Service final : public chirp::ServiceLayer::Service {
   grpc::Status monitor(grpc::ServerContext *context,
                        const chirp::MonitorRequest *request,
                        grpc::ServerWriter<chirp::MonitorReply> *stream);
-  // Check user exists to monitor before entering monitor
-  grpc::Status monitor_check(grpc::ServerContext *context,
-                             const chirp::MonitorRequest *request,
-                             chirp::Followers *reply);
+  // Checks if user exists, if user is following anyone to monitor and if so,
+  // lists who the user is following
+  grpc::Status validate_monitor_request(grpc::ServerContext *context,
+                                        const chirp::MonitorRequest *request,
+                                        chirp::Followers *reply);
 
  private:
   // Helper function - performs DFS on chirp thread to collect all chirps and
   // replies to chirps
   void ThreadDFS(chirp::ReadReply *reply, std::string chirp_id, int depth);
+  // Registers a user as "monitoring" with everyone they follow
+  void register_monitoring_user(chirp::User &user,
+                                std::vector<std::string> &followed_by_user,
+                                const std::string &username);
+  // Clear cached chirps & remove user as monitoring from users theyre following
+  void terminate_monitor(chirp::User &user,
+                         std::vector<std::string> &followed_by_user,
+                         const std::string &username);
+  // while monitoring, write new chirps to stream
+  void stream_new_chirps(chirp::User &user,
+                         grpc::ServerWriter<chirp::MonitorReply> *stream,
+                         chirp::MonitorReply &reply);
   // Part of the service layer than communicates with Backend Key Value Store
   // Implementation over GRPC
   BackendClient backend_client_;
