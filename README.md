@@ -98,8 +98,8 @@ sudo apt-get install cmake cd /usr/src/gtest sudo cmake CMakeLists.txt sudo make
 sudo apt install git
 git clone https://github.com/apetranik/499-petranik.git
 cd 499-petranik
-git checkout FinalPR-phase1
-git pull origin FinalPR-phase1
+git checkout Phase1-PR-Fixes
+git pull origin Phase1-PR-Fixes
 make clean && make
 ```
 
@@ -113,18 +113,21 @@ _Both backend and service must be running to use chirp CLI_
 
 #### Start backend:
 
+    $ cd src/
     $ ./run_server
 
 - Note: closing this will resete key value store
 
 #### Start service layer:
 
+    $ cd src/
     $ ./run_service
 
 - Note: if you quit the service layer, the backend key-value store will still be saved
 
 ## Chirp Client command reference
 
+- In `src/chirp.o`
 - All commands start with `./chirp`...
 - You can not perform more than one of these commands at once
 
@@ -156,5 +159,6 @@ _Both backend and service must be running to use chirp CLI_
 
 #### Run Tests:
 
+    $ cd test/
     $ ./key_value_store_unit_tests
     $ ./service_layer_unit_tests

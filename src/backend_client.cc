@@ -1,6 +1,6 @@
 #include "backend_client.h"
 
-std::string BackendClient::SendGetRequest(const std::string &key) {
+std::optional<std::string> BackendClient::Get(const std::string &key) {
   grpc::ClientContext context;
   std::shared_ptr<grpc::ClientReaderWriter<chirp::GetRequest, chirp::GetReply>>
       stream(stub_->get(&context));
@@ -24,8 +24,7 @@ std::string BackendClient::SendGetRequest(const std::string &key) {
   return value;
 }
 
-bool BackendClient::SendPutRequest(const std::string &key,
-                                   const std::string &value) {
+bool BackendClient::Put(const std::string &key, const std::string &value) {
   grpc::ClientContext context;
   chirp::PutRequest request;  // construct PutRequest and send to backend
   chirp::PutReply reply;
@@ -39,7 +38,7 @@ bool BackendClient::SendPutRequest(const std::string &key,
   return false;
 }
 
-bool BackendClient::SendDeleteKeyRequest(const std::string &key) {
+bool BackendClient::Del(const std::string &key) {
   grpc::ClientContext context;
   chirp::DeleteRequest request;
   chirp::DeleteReply reply;

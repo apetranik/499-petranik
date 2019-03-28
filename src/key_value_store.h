@@ -1,17 +1,18 @@
-#ifndef CHIRP_KEY_VALUE_STORE_H_
-#define CHIRP_KEY_VALUE_STORE_H_
+#ifndef SRC_CHIRP_KEY_VALUE_STORE_H_
+#define SRC_CHIRP_KEY_VALUE_STORE_H_
 
 #include <iostream>
 #include <map>
 #include <optional>
 #include <string>
 
+#include "key_value_store_interface.h"
+
 // the key-value data structure for storing chirp data
 // Has GET, PUT, DEL functionality
-class KeyValueStore {
+class KeyValueStore : public KeyValueStoreInterface {
  public:
-  KeyValueStore();
-  virtual ~KeyValueStore();
+  virtual ~KeyValueStore(){};
   // get value from key-value store using key.
   // return true if successful
   std::optional<std::string> Get(const std::string &key);

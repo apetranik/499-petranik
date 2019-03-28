@@ -37,7 +37,9 @@ GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
 PROTOS_PATH = ./protos
-
+SRC_PATH = ./src
+BIN = ./bin
+TEST = ./tests
 vpath %.proto $(PROTOS_PATH)
 
 %.grpc.pb.cc: %.proto
@@ -46,22 +48,25 @@ vpath %.proto $(PROTOS_PATH)
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
-all: run_server run_service chirp key_value_store_unit_tests
+all: run_server run_service chirp key_value_store_unit_tests service_layer_unit_tests
 
-run_server: key_value_store.pb.o key_value_store.grpc.pb.o backend_server.o key_value_store.o run_server.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+run_server: key_value_store.pb.o key_value_store.grpc.pb.o ./src/key_value_store_interface.o ./src/key_value_store.o ./src/backend_server.o ./src/run_server.o
+	$(CXX) $^ $(LDFLAGS) -o ./bin/$@
 
-run_service: service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o service.o backend_client.o run_service.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+run_service: service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o ./src/service.o ./src/backend_client.o ./src/key_value_store_interface.o ./src/service_controller.o ./src/run_service.o
+	$(CXX) $^ $(LDFLAGS) -o ./bin/$@
 
-chirp: service.pb.o service.grpc.pb.o chirp_client.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+chirp: service.pb.o service.grpc.pb.o ./src/chirp_client.o
+	$(CXX) $^ $(LDFLAGS) -o ./bin/$@
 
-key_value_store_unit_tests: ./tests/key_value_store_unit_tests.o key_value_store.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+key_value_store_unit_tests: ./tests/key_value_store_unit_tests.o ./src/key_value_store.o
+	$(CXX) $^ $(LDFLAGS) -o ./tests/$@
+
+service_layer_unit_tests: ./tests/service_layer_unit_tests.o key_value_store.pb.o key_value_store.grpc.pb.o service.pb.o service.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o ./src/key_value_store.o ./src/service.o ./src/service_controller.o ./src/backend_client.o ./src/key_value_store_interface.o
+	$(CXX) $^ $(LDFLAGS) -o ./tests/$@
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h run_server run_service chirp
+	rm -f *.o *.pb.cc *.pb.h bin/* logs/*
 
 # The following is to test your system and ensure a smoother experience.
 # They are by no means necessary to actually compile a grpc-enabled software.

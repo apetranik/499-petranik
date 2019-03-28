@@ -1,5 +1,5 @@
-#ifndef CHIRP_BACKEND_SERVER_H_
-#define CHIRP_BACKEND_SERVER_H_
+#ifndef SRC_CHIRP_BACKEND_SERVER_H_
+#define SRC_CHIRP_BACKEND_SERVER_H_
 
 #include <iostream>
 #include <optional>
@@ -8,7 +8,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "key_value_store.grpc.pb.h"
+#include "../key_value_store.grpc.pb.h"
 #include "key_value_store.h"
 
 // Implementation of key value store
@@ -17,7 +17,6 @@
 // inherits from the `chirp::KeyValueStore::Service`
 class KeyValueStoreImpl final : public chirp::KeyValueStore::Service {
  public:
-  KeyValueStoreImpl() : key_value_store_() {}
   // Accepts put requests from service layer and modifies key_value_store_
   grpc::Status put(grpc::ServerContext *context,
                    const chirp::PutRequest *request, chirp::PutReply *reply);

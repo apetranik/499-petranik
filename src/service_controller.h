@@ -1,5 +1,5 @@
-#ifndef CHIRP_SERVICE_H_
-#define CHIRP_SERVICE_H_
+#ifndef SRC_CHIRP_SERVICE_CONTROLLER_H_
+#define SRC_CHIRP_SERVICE_CONTROLLER_H_
 
 #include <memory>
 #include <mutex>
@@ -11,17 +11,15 @@
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
-#include "data_storage_types.grpc.pb.h"
-#include "service.grpc.pb.h"
-
 #include "backend_client.h"
+#include "service.h"
+
+#include "../data_storage_types.grpc.pb.h"
+#include "../service.grpc.pb.h"
 
 // A backend service to receive requests from client (command line)
-class Service final : public chirp::ServiceLayer::Service {
+class ServiceController final : public chirp::ServiceLayer::Service {
  public:
-  Service()
-      : backend_client_(grpc::CreateChannel(
-            "localhost:50002", grpc::InsecureChannelCredentials())) {}
   // Registers the given non-blank username
   grpc::Status registeruser(grpc::ServerContext *context,
                             const chirp::RegisterRequest *request,
@@ -48,26 +46,14 @@ class Service final : public chirp::ServiceLayer::Service {
                                         chirp::Followers *reply);
 
  private:
-  // Helper function - performs DFS on chirp thread to collect all chirps and
-  // replies to chirps
-  void ThreadDFS(chirp::ReadReply *reply, std::string chirp_id, int depth);
-  // Registers a user as "monitoring" with everyone they follow
-  void register_monitoring_user(chirp::User &user,
-                                std::vector<std::string> &followed_by_user,
-                                const std::string &username);
-  // Clear cached chirps & remove user as monitoring from users theyre following
-  void terminate_monitor(chirp::User &user,
-                         std::vector<std::string> &followed_by_user,
-                         const std::string &username);
   // while monitoring, write new chirps to stream
   void stream_new_chirps(chirp::User &user,
                          grpc::ServerWriter<chirp::MonitorReply> *stream,
                          chirp::MonitorReply &reply);
   // Part of the service layer than communicates with Backend Key Value Store
-  // Implementation over GRPC
+  // Either over grpc or straight to KVS (for unit testing)
   BackendClient backend_client_;
-  // mutex used for concurrency
-  std::mutex mutex_;
+  ServiceLayer service_ = ServiceLayer(&backend_client_);
 };
 
 #endif

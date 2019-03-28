@@ -1,5 +1,7 @@
-#ifndef CHIRP_CLIENT_H_
-#define CHIRP_CLIENT_H_
+#ifndef SRC_CHIRP_CLIENT_H_
+#define SRC_CHIRP_CLIENT_H_
+
+#define LOG_DIR "../logs/"
 
 #include <iostream>
 #include <memory>
@@ -10,7 +12,7 @@
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
 
-#include "service.grpc.pb.h"
+#include "../service.grpc.pb.h"
 
 // Handles command line input and sends requests to service layer thru GRPC
 class ChirpClient {

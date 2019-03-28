@@ -20,7 +20,7 @@ int ChirpClient::registeruser(const std::string& user) {
 
   std::string logging_message;
   // User already exists in key value store
-  if (status.error_code() == grpc::StatusCode::ALREADY_EXISTS) {
+  if (status.error_code() == grpc::StatusCode::INVALID_ARGUMENT) {
     logging_message = "Failure to register '" + user + "'";
     logging_message += "\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
@@ -85,7 +85,7 @@ int ChirpClient::follow(const std::string& user,
   std::string logging_message;
   // User doesn't exist so follow failed
   if (status.error_code() == grpc::StatusCode::NOT_FOUND) {
-    logging_message = "Failed follow\n" + status.error_message();
+    logging_message = "Failed follow attempt\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
     return 1;
   }
@@ -232,7 +232,7 @@ void ChirpClient::PrintChirpThread(
     thread_string += google::protobuf::util::TimeUtil::ToString(
         google::protobuf::util::TimeUtil::SecondsToTimestamp(
             reply_chirps.at(0).timestamp().seconds()));
-    thread_string += "\n|----------------------------------|";
+    thread_string += "\n|----------------------------------|\n";
   }
 
   // Is a thread so we need to tab correctly
@@ -245,7 +245,8 @@ void ChirpClient::PrintChirpThread(
       for (int i = 1; i < chirp.depth(); ++i) {
         total_tabs += tab;
       }
-      thread_string += total_tabs + "|----------------------------------|\n";
+      thread_string +=
+          "\n" + total_tabs + "|----------------------------------|\n";
       thread_string += total_tabs + "  [" + chirp.username() + "]\n";
       thread_string += total_tabs + "  ID: " + chirp.id();
       if (!chirp.parent_id().empty()) {
@@ -272,7 +273,7 @@ void ChirpClient::PrintChirpThread(
 int main(int argc, char** argv) {
   ChirpClient chirp_client(grpc::CreateChannel(
       "localhost:50000", grpc::InsecureChannelCredentials()));
-  google::SetLogDestination(google::GLOG_INFO, "logs/");
+  google::SetLogDestination(google::GLOG_INFO, "../logs/");
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string register_user = FLAGS_register;

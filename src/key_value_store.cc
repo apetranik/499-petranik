@@ -1,9 +1,5 @@
 #include "key_value_store.h"
 
-KeyValueStore::KeyValueStore() : key_value_store_() {}
-
-KeyValueStore::~KeyValueStore() {}
-
 std::optional<std::string> KeyValueStore::Get(const std::string &key) {
   auto it = key_value_store_.find(key);
 

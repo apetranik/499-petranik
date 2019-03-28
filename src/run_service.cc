@@ -1,11 +1,11 @@
-#include "service.h"
 
 #include <grpcpp/grpcpp.h>
+#include "service_controller.h"
 
 // Sets up GRPC and starts server
-void run_server() {
+void run_service() {
   const std::string server_address("0.0.0.0:50000");
-  Service service;
+  ServiceController service;
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
@@ -15,6 +15,6 @@ void run_server() {
 }
 
 int main(int argc, char **argv) {
-  run_server();
+  run_service();
   return 0;
 }
