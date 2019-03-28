@@ -6,11 +6,7 @@ import "service.proto";
 message User {
   string username = 1;
   repeated Chirp chirps = 2;
-  repeated string follows = 3;
+  repeated string following = 3;
+  repeated string followers_monitoring = 4;
+  repeated Chirp monitored_chirps = 5;
 }
-
-message ChirpThread {
-  Chirp original_chirp = 2;
-  repeated Chirp replies = 1;
-}
-
