@@ -20,7 +20,7 @@
 
 // A backend service to receive requests from client (command line)
 class ServiceLayer final {
- public:
+public:
   ServiceLayer(KeyValueStoreInterface *kvs_connection);
   // Constructs a RegisterRequest and sends to service layer thru grpc and
   // receives a RegisterReply back
@@ -43,14 +43,16 @@ class ServiceLayer final {
                                     const std::string &text,
                                     const std::string &parent_id);
   // checks existance of user and lets user know who they are following
-  std::optional<chirp::User> validate_monitor_request(
-      const std::string &username);
+  std::optional<chirp::User>
+  validate_monitor_request(const std::string &username);
   // Clear cached chirps & remove user as monitoring from users theyre following
   void terminate_monitor(chirp::User &user,
                          std::vector<std::string> &followed_by_user,
                          const std::string &username);
+  // // Cindy's Implementation for streaming chirps with hashtags
+  std::vector<chirp::Chirp> stream(const std::string hashtag);
 
- private:
+private:
   // Helper function - performs DFS on chirp thread to collect all chirps and
   // replies to chirps
   void ThreadDFS(std::vector<chirp::Chirp> &chirp_thread, std::string chirp_id,

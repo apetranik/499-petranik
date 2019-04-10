@@ -6,6 +6,7 @@ ServiceLayer::ServiceLayer(KeyValueStoreInterface *kvs_connection) {
 // Constructs a RegisterRequest and sends to service layer thru grpc and
 // receives a RegisterReply back
 bool ServiceLayer::registeruser(const std::string &username) {
+  std::cout << "here3" << std::endl;
   std::string user_serialized = backend_client_->Get(username).value();
 
   // user already exists
@@ -24,7 +25,7 @@ bool ServiceLayer::registeruser(const std::string &username) {
 std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &text,
                                                 const std::string &parent_id) {
-  std::lock_guard<std::mutex> guard(mutex_);  // get lock
+  std::lock_guard<std::mutex> guard(mutex_); // get lock
 
   // check if user who is chirping exists in key value store
   auto user_exists = backend_client_->Get(username);
@@ -49,9 +50,8 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   }
   ++num_chirps;
   num_chirps_str = std::to_string(num_chirps);
-  bool success =
-      backend_client_->Put("num_chirps",
-                           num_chirps_str);  // update new chirp count
+  bool success = backend_client_->Put("num_chirps",
+                                      num_chirps_str); // update new chirp count
 
   // construct new Chirp and fill with relevant params
   chirp::Chirp chirp;
@@ -74,9 +74,9 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   chirp.set_allocated_timestamp(stamp);
 
   std::string chirp_serialized;
-  chirp.SerializeToString(&chirp_serialized);  // Serialize chirp to string
+  chirp.SerializeToString(&chirp_serialized); // Serialize chirp to string
   backend_client_->Put(chirp.id(),
-                       chirp_serialized);  // add new chirp to backend
+                       chirp_serialized); // add new chirp to backend
 
   // If applicable, update Parent Chirp with new child reply
   if (!parent_id.empty()) {
@@ -95,7 +95,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   std::string user_serialized = backend_client_->Get(username).value();
   user.ParseFromString(user_serialized);
 
-  std::vector<std::string> monitoring_users_serialized;  // followers_monitoring
+  std::vector<std::string> monitoring_users_serialized; // followers_monitoring
   std::vector<chirp::User> monitoring_users;
   std::copy(user.followers_monitoring().begin(),
             user.followers_monitoring().end(),
@@ -107,15 +107,14 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   // iterate thru all currently monitoring users and give them new chirp
   for (const std::string username : monitoring_users_serialized) {
     monitoring_user_serialized =
-        backend_client_->Get(username).value();  // Get follower
+        backend_client_->Get(username).value(); // Get follower
     monitoring_user.ParseFromString(monitoring_user_serialized);
     chirp::Chirp *incoming_chirp =
-        monitoring_user
-            .add_monitored_chirps();  // add new chirp to be monitored
-    *incoming_chirp = chirp;          // fill chirp
+        monitoring_user.add_monitored_chirps(); // add new chirp to be monitored
+    *incoming_chirp = chirp;                    // fill chirp
     monitoring_user.SerializeToString(&monitoring_user_serialized);
     backend_client_->Put(username,
-                         monitoring_user_serialized);  // save chirp to follower
+                         monitoring_user_serialized); // save chirp to follower
   }
   return chirp;
 }
@@ -153,7 +152,7 @@ std::string ServiceLayer::follow(const std::string &username,
       return "dup_follow";
     }
   }
-  user.add_following(user_to_follow);  // add as follower
+  user.add_following(user_to_follow); // add as follower
   user.SerializeToString(&user_exists);
   backend_client_->Put(username, user_exists);
   return "success";
@@ -201,9 +200,11 @@ void ServiceLayer::ThreadDFS(std::vector<chirp::Chirp> &chirp_thread,
 }
 // Constructs a MonitorRequest and sends to service layer thru grpc and
 // receives a stream MonitorReply back
-std::vector<chirp::Chirp> ServiceLayer::monitor(
-    const std::string &username, std::vector<std::string> &followed_by_user,
-    bool registered) {
+std::vector<chirp::Chirp>
+ServiceLayer::monitor(const std::string &username,
+                      std::vector<std::string> &followed_by_user,
+                      bool registered) {
+  std::cout << "check monitor 3" << std::endl;
   std::vector<chirp::Chirp> new_chirps;
 
   // Register user as monitoring with everyone they follow
@@ -228,8 +229,8 @@ std::vector<chirp::Chirp> ServiceLayer::monitor(
   return new_chirps;
 }
 
-std::optional<chirp::User> ServiceLayer::validate_monitor_request(
-    const std::string &username) {
+std::optional<chirp::User>
+ServiceLayer::validate_monitor_request(const std::string &username) {
   // check if user who is trying to monitor exists in key value store
   auto user_serialized = backend_client_->Get(username);
   if (user_serialized == "[empty_key]") {
@@ -304,6 +305,10 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
     followed_user.SerializeToString(&users_monitoring);
     backend_client_->Put(
         followed_username,
-        users_monitoring);  // save back all users still monitoring
+        users_monitoring); // save back all users still monitoring
   }
+}
+std::vector<chirp::Chirp> ServiceLayer::stream(const std::string hashtag) {
+  // TODO add hashtag to database. Create proto to save all the hashtags
+  // messages!
 }
