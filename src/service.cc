@@ -20,6 +20,30 @@ bool ServiceLayer::registeruser(const std::string &username) {
   bool success = backend_client_->Put(username, user_serialized);
   return success;
 }
+void ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
+
+  std::size_t found = text.find('#');
+  if (found != std::string::npos) {
+    std::string hashtagword;
+    int position = static_cast<int>(found);
+    for (int i = position; i < text.length(); i++) {
+      if (text[i] != ' ') {
+        hashtagword += text[i];
+      } else {
+        break;
+      }
+    }
+    hashtagword = trim(hashtagword);
+    // TODO: create proto and save to database
+  }
+}
+std::string ServiceLayer::trim(std::string &str) {
+  size_t first = str.find_first_not_of(' ');
+  if (first == std::string::npos)
+    return "";
+  size_t last = str.find_last_not_of(' ');
+  return str.substr(first, (last - first + 1));
+}
 // Constructs a ChirpRequest and sends to service layer thru grpc and receives
 // a ChirpReply back
 std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
@@ -27,6 +51,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &parent_id) {
   std::lock_guard<std::mutex> guard(mutex_); // get lock
 
+  CheckIfHaveHashtag(text);
   // check if user who is chirping exists in key value store
   auto user_exists = backend_client_->Get(username);
   if (user_exists == "[empty_key]") {
@@ -311,4 +336,7 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
 std::vector<chirp::Chirp> ServiceLayer::stream(const std::string hashtag) {
   // TODO add hashtag to database. Create proto to save all the hashtags
   // messages!
+  std::vector<chirp::Chirp> v;
+
+  return v;
 }

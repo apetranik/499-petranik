@@ -10,3 +10,7 @@ message User {
   repeated string followers_monitoring = 4;
   repeated Chirp monitored_chirps = 5;
 }
+message Hashtags {
+  string hashtag = 1;
+  repeated Chirp chirps_with_hashtag = 2;
+}

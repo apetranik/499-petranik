@@ -17,6 +17,7 @@ ServiceController::registeruser(grpc::ServerContext *context,
 grpc::Status ServiceController::chirp(grpc::ServerContext *context,
                                       const chirp::ChirpRequest *request,
                                       chirp::ChirpReply *reply) {
+
   auto chirp = service_.chirp(request->username(), request->text(),
                               request->parent_id());
   // Nothing returned, user doesn't exist or parent id doesn't exist
@@ -143,6 +144,12 @@ ServiceController::stream(grpc::ServerContext *context,
                           grpc::ServerWriter<chirp::StreamReply> *stream) {
   chirp::StreamReply reply;
   chirp::Chirp chirp;
-  // TODO call stream in service.h
+  while (true) {
+    if (context->IsCancelled()) {
+      return grpc::Status::CANCELLED;
+    }
+    std::vector<chirp::Chirp> chirp_stream =
+        service_.stream(request->hashtag());
+  }
   return grpc::Status::OK;
 }
