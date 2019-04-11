@@ -149,9 +149,27 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
     // chirp to string.
     chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
     *add_hashtag_chirp = chirp;
+    AddHashtagToDatabase(hashtag_proto, hashtag);
   }
 
   return chirp;
+}
+void ServiceLayer::AddHashtagToDatabase(const chirp::Hashtags &hash,
+                                        const std::string &hashtagword) {
+  std::string hashtagproto_to_string;
+  hash.SerializeToString(&hashtagproto_to_string);
+  // Figure out if this hashtag word exist in database already, if so, just
+  // append to that proto, if not make a new hashtag proto
+
+  auto from_get = backend_client_->Get(hashtagword);
+  std::cout << from_get.has_value() << std::endl;
+  if (from_get.has_value()) {
+    LOG(INFO) << "yes something" << std::endl;
+  } else {
+    LOG(INFO) << "nope something" << std::endl;
+  }
+  // TODO test what it sends if it doesnt exist in database
+  backend_client_->Put(hashtagword, hashtagproto_to_string);
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and
 // receives a FollowReply back
