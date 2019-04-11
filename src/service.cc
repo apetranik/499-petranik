@@ -6,7 +6,7 @@ ServiceLayer::ServiceLayer(KeyValueStoreInterface *kvs_connection) {
 // Constructs a RegisterRequest and sends to service layer thru grpc and
 // receives a RegisterReply back
 bool ServiceLayer::registeruser(const std::string &username) {
-  std::cout << "here3" << std::endl;
+
   std::string user_serialized = backend_client_->Get(username).value();
 
   // user already exists
@@ -204,7 +204,7 @@ std::vector<chirp::Chirp>
 ServiceLayer::monitor(const std::string &username,
                       std::vector<std::string> &followed_by_user,
                       bool registered) {
-  std::cout << "check monitor 3" << std::endl;
+
   std::vector<chirp::Chirp> new_chirps;
 
   // Register user as monitoring with everyone they follow

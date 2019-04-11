@@ -10,7 +10,7 @@ DEFINE_string(follow, "", "Starts following the given username");
 DEFINE_bool(monitor, false, "Streams new tweets from those currently followed");
 
 int ChirpClient::registeruser(const std::string &user) {
-  std::cout << "here1" << std::endl;
+
   grpc::ClientContext context;
   chirp::RegisterRequest request;
   chirp::RegisterReply reply; // Data from server will be updated here
@@ -144,7 +144,6 @@ int ChirpClient::read(const std::string &chirp_id) {
 
 int ChirpClient::monitor(const std::string &user) {
 
-  std::cout << "check monitor 1" << std::endl;
   grpc::ClientContext context;
   chirp::MonitorRequest request;
   chirp::MonitorReply reply; // Data from service layer will be updated here
@@ -275,7 +274,7 @@ bool ChirpClient::stream(const std::string &hashtagword) {
   grpc::ClientContext context;
   chirp::StreamRequest request;
   request.set_hashtag(hashtagword);
-  std::cout << "comes streams" << std::endl;
+
   std::unique_ptr<grpc::ClientReader<chirp::StreamReply>> reader(
       stub_->stream(&context, request));
   // TODO: output the streams here.

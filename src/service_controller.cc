@@ -5,7 +5,7 @@ ServiceController::registeruser(grpc::ServerContext *context,
                                 const chirp::RegisterRequest *request,
                                 chirp::RegisterReply *reply) {
   // check if user is already registered
-  std::cout << "here2" << std::endl;
+
   bool success = service_.registeruser(request->username());
   if (!success) {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
@@ -109,7 +109,7 @@ grpc::Status
 ServiceController::monitor(grpc::ServerContext *context,
                            const chirp::MonitorRequest *request,
                            grpc::ServerWriter<chirp::MonitorReply> *stream) {
-  std::cout << "check monitor 2" << std::endl;
+
   chirp::MonitorReply reply;
   chirp::User user;
   std::vector<std::string> followed_by_user;
