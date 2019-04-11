@@ -1,5 +1,6 @@
 #include "chirp_client.h"
 
+DEFINE_string(stream, "", "stream all chirps with this hashtag");
 DEFINE_string(register, "", "register user in key value store");
 DEFINE_string(user, "", "current user of chirp");
 DEFINE_string(chirp, "", "string to chirp out");
@@ -8,10 +9,11 @@ DEFINE_string(read, "", "Reads the chirp thread starting at the given id");
 DEFINE_string(follow, "", "Starts following the given username");
 DEFINE_bool(monitor, false, "Streams new tweets from those currently followed");
 
-int ChirpClient::registeruser(const std::string& user) {
+int ChirpClient::registeruser(const std::string &user) {
+
   grpc::ClientContext context;
   chirp::RegisterRequest request;
-  chirp::RegisterReply reply;  // Data from server will be updated here
+  chirp::RegisterReply reply; // Data from server will be updated here
 
   request.set_username(user);
 
@@ -35,8 +37,8 @@ int ChirpClient::registeruser(const std::string& user) {
   }
 }
 
-int ChirpClient::chirp(const std::string& user, const std::string& text,
-                       const std::string& parent_id) {
+int ChirpClient::chirp(const std::string &user, const std::string &text,
+                       const std::string &parent_id) {
   grpc::ClientContext context;
   chirp::ChirpRequest request;
   chirp::ChirpReply reply;
@@ -70,11 +72,11 @@ int ChirpClient::chirp(const std::string& user, const std::string& text,
   }
 }
 
-int ChirpClient::follow(const std::string& user,
-                        const std::string& user_to_follow) {
+int ChirpClient::follow(const std::string &user,
+                        const std::string &user_to_follow) {
   grpc::ClientContext context;
   chirp::FollowRequest request;
-  chirp::FollowReply reply;  // Data from server will be updated here
+  chirp::FollowReply reply; // Data from server will be updated here
 
   request.set_username(user);
   request.set_to_follow(user_to_follow);
@@ -105,10 +107,10 @@ int ChirpClient::follow(const std::string& user,
   }
 }
 
-int ChirpClient::read(const std::string& chirp_id) {
+int ChirpClient::read(const std::string &chirp_id) {
   grpc::ClientContext context;
   chirp::ReadRequest request;
-  chirp::ReadReply reply;  // Data from server will be updated here
+  chirp::ReadReply reply; // Data from server will be updated here
 
   request.set_chirp_id(chirp_id);
 
@@ -140,18 +142,19 @@ int ChirpClient::read(const std::string& chirp_id) {
   }
 }
 
-int ChirpClient::monitor(const std::string& user) {
+int ChirpClient::monitor(const std::string &user) {
+
   grpc::ClientContext context;
   chirp::MonitorRequest request;
-  chirp::MonitorReply reply;  // Data from service layer will be updated here
+  chirp::MonitorReply reply; // Data from service layer will be updated here
 
   request.set_username(user);
   // error check and give info to user about followers
   if (!CheckMonitorInfo(user)) {
-    return 1;  // return if monitoring check failed and monitoring will fail
+    return 1; // return if monitoring check failed and monitoring will fail
   }
 
-  std::unique_ptr<grpc::ClientReader<chirp::MonitorReply> > reader(
+  std::unique_ptr<grpc::ClientReader<chirp::MonitorReply>> reader(
       stub_->monitor(&context, request));
 
   std::vector<chirp::Chirp> chirps;
@@ -181,7 +184,7 @@ int ChirpClient::monitor(const std::string& user) {
   }
 }
 
-bool ChirpClient::CheckMonitorInfo(const std::string& user) {
+bool ChirpClient::CheckMonitorInfo(const std::string &user) {
   grpc::ClientContext context;
   chirp::MonitorRequest request;
   request.set_username(user);
@@ -216,7 +219,7 @@ bool ChirpClient::CheckMonitorInfo(const std::string& user) {
 }
 
 void ChirpClient::PrintChirpThread(
-    const std::vector<chirp::Chirp>& reply_chirps, bool isThread) {
+    const std::vector<chirp::Chirp> &reply_chirps, bool isThread) {
   // only need to print one chirp
   std::string thread_string = "";
   if (!isThread) {
@@ -266,11 +269,23 @@ void ChirpClient::PrintChirpThread(
   std::cout << thread_string << std::endl;
   LOG(INFO) << thread_string << std::endl;
 }
+// Cindy's Implementation
+bool ChirpClient::stream(const std::string &hashtagword) {
+  grpc::ClientContext context;
+  chirp::StreamRequest request;
+  request.set_hashtag(hashtagword);
+
+  std::unique_ptr<grpc::ClientReader<chirp::StreamReply>> reader(
+      stub_->stream(&context, request));
+  // TODO: output the streams here.
+  // Sucessfully able to call functions through grpc for streaming hashtags
+  return true;
+}
 // Instantiate client. It requires a channel, out of which the actual RPCs
 // are created. This channel models a connection to an endpoint (in this case,
 // localhost at port 50000). We indicate that the channel isn't authenticated
 // (use of InsecureChannelCredentials()).
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ChirpClient chirp_client(grpc::CreateChannel(
       "localhost:50000", grpc::InsecureChannelCredentials()));
   google::SetLogDestination(google::GLOG_INFO, "../logs/");
@@ -282,6 +297,7 @@ int main(int argc, char** argv) {
   std::string parent_id = FLAGS_reply;
   std::string read_id = FLAGS_read;
   std::string follow = FLAGS_follow;
+  std::string stream = FLAGS_stream;
   bool monitor = FLAGS_monitor;
 
   if (!register_user.empty()) {
@@ -302,6 +318,9 @@ int main(int argc, char** argv) {
     }
     if (!follow.empty()) {
       return chirp_client.follow(user, follow);
+    }
+    if (!stream.empty()) {
+      return chirp_client.stream("test");
     }
     if (monitor) {
       return chirp_client.monitor(user);

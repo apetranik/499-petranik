@@ -64,6 +64,13 @@ message Followers {
   string names = 1;
 }
 
+message StreamRequest {
+  string hashtag = 1;
+}
+message StreamReply{
+  Chirp chirp = 1;
+}
+
 service ServiceLayer {
  rpc registeruser (RegisterRequest) returns (RegisterReply) {}
  rpc chirp (ChirpRequest) returns (ChirpReply) {}
@@ -71,4 +78,5 @@ service ServiceLayer {
  rpc read (ReadRequest) returns (ReadReply) {}
  rpc monitor (MonitorRequest) returns (stream MonitorReply) {}
  rpc validate_monitor_request (MonitorRequest) returns (Followers) {}
+ rpc stream (StreamRequest) returns (stream StreamReply){}
 }

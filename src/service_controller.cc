@@ -1,9 +1,11 @@
 #include "service_controller.h"
 
-grpc::Status ServiceController::registeruser(
-    grpc::ServerContext *context, const chirp::RegisterRequest *request,
-    chirp::RegisterReply *reply) {
+grpc::Status
+ServiceController::registeruser(grpc::ServerContext *context,
+                                const chirp::RegisterRequest *request,
+                                chirp::RegisterReply *reply) {
   // check if user is already registered
+
   bool success = service_.registeruser(request->username());
   if (!success) {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
@@ -86,7 +88,7 @@ grpc::Status ServiceController::validate_monitor_request(
 
   // Tell user who they are currently following
   if (!user.following().empty()) {
-    std::vector<std::string> following_users;  // followers_monitoring
+    std::vector<std::string> following_users; // followers_monitoring
     std::copy(user.following().begin(), user.following().end(),
               std::back_inserter(following_users));
     // construct msg with current users you are followering
@@ -103,9 +105,11 @@ grpc::Status ServiceController::validate_monitor_request(
   return grpc::Status::OK;
 }
 
-grpc::Status ServiceController::monitor(
-    grpc::ServerContext *context, const chirp::MonitorRequest *request,
-    grpc::ServerWriter<chirp::MonitorReply> *stream) {
+grpc::Status
+ServiceController::monitor(grpc::ServerContext *context,
+                           const chirp::MonitorRequest *request,
+                           grpc::ServerWriter<chirp::MonitorReply> *stream) {
+
   chirp::MonitorReply reply;
   chirp::User user;
   std::vector<std::string> followed_by_user;
@@ -130,5 +134,15 @@ grpc::Status ServiceController::monitor(
     }
     registeredAsMonitoring = true;
   }
+  return grpc::Status::OK;
+}
+
+grpc::Status
+ServiceController::stream(grpc::ServerContext *context,
+                          const chirp::StreamRequest *request,
+                          grpc::ServerWriter<chirp::StreamReply> *stream) {
+  chirp::StreamReply reply;
+  chirp::Chirp chirp;
+  // TODO call stream in service.h
   return grpc::Status::OK;
 }
