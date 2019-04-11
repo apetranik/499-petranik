@@ -20,11 +20,11 @@ bool ServiceLayer::registeruser(const std::string &username) {
   bool success = backend_client_->Put(username, user_serialized);
   return success;
 }
-void ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
+std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
 
   std::size_t found = text.find('#');
+  std::string hashtagword = "";
   if (found != std::string::npos) {
-    std::string hashtagword;
     int position = static_cast<int>(found);
     for (int i = position; i < text.length(); i++) {
       if (text[i] != ' ') {
@@ -34,7 +34,7 @@ void ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
       }
     }
     hashtagword = trim(hashtagword);
-    // TODO: create proto and save to database
+    return hashtagword;
   }
 }
 std::string ServiceLayer::trim(std::string &str) {
@@ -51,7 +51,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &parent_id) {
   std::lock_guard<std::mutex> guard(mutex_); // get lock
 
-  CheckIfHaveHashtag(text);
+  std::string hashtag = CheckIfHaveHashtag(text);
   // check if user who is chirping exists in key value store
   auto user_exists = backend_client_->Get(username);
   if (user_exists == "[empty_key]") {
@@ -141,6 +141,16 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
     backend_client_->Put(username,
                          monitoring_user_serialized); // save chirp to follower
   }
+
+  // add to hashtag if exist, not empty
+  if (hashtag != "") {
+    chirp::Hashtags hashtag_proto;
+    hashtag_proto.set_hashtag(hashtag);
+    // chirp to string.
+    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
+    *add_hashtag_chirp = chirp;
+  }
+
   return chirp;
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and

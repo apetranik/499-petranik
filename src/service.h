@@ -53,7 +53,7 @@ public:
   std::vector<chirp::Chirp> stream(const std::string hashtag);
   // This function is called in chirp() to determine if the text consist of an
   // hashtag. If so, save that chirp into a proto Hashtags.
-  void CheckIfHaveHashtag(const std::string &text);
+  std::string CheckIfHaveHashtag(const std::string &text);
   // trim() takes trailing spaces off strings
   std::string trim(std::string &str);
 
