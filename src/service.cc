@@ -144,12 +144,6 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
 
   // add to hashtag if exist, not empty
   if (hashtag != "") {
-    // chirp::Hashtags hashtag_proto;
-    // hashtag_proto.set_hashtag(hashtag);
-    // chirp to string.
-    // chirp::Chirp *add_hashtag_chirp
-    //  = hashtag_proto.add_chirps_with_hashtag();
-    // *add_hashtag_chirp = chirp;
     AddHashtagToDatabase(chirp, hashtag);
   }
 
