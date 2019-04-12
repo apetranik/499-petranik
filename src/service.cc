@@ -144,32 +144,47 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
 
   // add to hashtag if exist, not empty
   if (hashtag != "") {
-    chirp::Hashtags hashtag_proto;
-    hashtag_proto.set_hashtag(hashtag);
+    // chirp::Hashtags hashtag_proto;
+    // hashtag_proto.set_hashtag(hashtag);
     // chirp to string.
-    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
-    *add_hashtag_chirp = chirp;
-    AddHashtagToDatabase(hashtag_proto, hashtag);
+    // chirp::Chirp *add_hashtag_chirp
+    //  = hashtag_proto.add_chirps_with_hashtag();
+    // *add_hashtag_chirp = chirp;
+    AddHashtagToDatabase(chirp, hashtag);
   }
 
   return chirp;
 }
-void ServiceLayer::AddHashtagToDatabase(const chirp::Hashtags &hash,
+void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
                                         const std::string &hashtagword) {
-  std::string hashtagproto_to_string;
-  hash.SerializeToString(&hashtagproto_to_string);
+
   // Figure out if this hashtag word exist in database already, if so, just
   // append to that proto, if not make a new hashtag proto
 
   auto from_get = backend_client_->Get(hashtagword);
   std::cout << from_get.has_value() << std::endl;
-  if (from_get.has_value()) {
-    LOG(INFO) << "yes something" << std::endl;
+  if (from_get.value() != "[empty_key]") {
+    LOG(INFO) << "hashtag proto exists already!" << std::endl;
+    chirp::Hashtags create_hashtag;
+    create_hashtag.ParseFromString(from_get.value());
+    chirp::Chirp *adding_chirp_with_hashtag =
+        create_hashtag.add_chirps_with_hashtag();
+    *adding_chirp_with_hashtag = chirp;
+
+    std::string hashtag_tostring;
+    create_hashtag.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(hashtagword, hashtag_tostring);
   } else {
-    LOG(INFO) << "nope something" << std::endl;
+    LOG(INFO) << "hashtag proto doesn't exist yet." << std::endl;
+    chirp::Hashtags hashtag_proto;
+    hashtag_proto.set_hashtag(hashtagword);
+    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
+    *add_hashtag_chirp = chirp;
+
+    std::string hashtag_tostring;
+    hashtag_proto.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(hashtagword, hashtag_tostring);
   }
-  // TODO test what it sends if it doesnt exist in database
-  backend_client_->Put(hashtagword, hashtagproto_to_string);
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and
 // receives a FollowReply back

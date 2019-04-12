@@ -73,7 +73,7 @@ private:
   // trim() takes trailing spaces off strings
   std::string trim(std::string &str);
   // helper function to add hashtag to database
-  void AddHashtagToDatabase(const chirp::Hashtags &hash,
+  void AddHashtagToDatabase(const chirp::Chirp &hash,
                             const std::string &hashtagword);
 };
 
