@@ -75,6 +75,8 @@ private:
   // helper function to add hashtag to database
   void AddHashtagToDatabase(const chirp::Chirp &hash,
                             const std::string &hashtagword);
+  // Empty string constant
+  const std::string kEmptyKey = "[empty_key]";
 };
 
 #endif

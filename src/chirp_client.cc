@@ -285,8 +285,6 @@ bool ChirpClient::stream(const std::string &hashtagword) {
   // RPC call - read in chirps from stream continously
   while (true) {
     if (reader->Read(&reply)) {
-      // chirps.push_back(reply.chirp());
-      // chirps.clear();
     }
   }
 
@@ -296,13 +294,11 @@ bool ChirpClient::stream(const std::string &hashtagword) {
     logging_message = "Streaming ended\n" + status.error_message();
     std::cout << logging_message << std::endl;
     LOG(INFO) << logging_message << std::endl;
-    return 0;
-  }
-  // Other
-  else {
+    return false;
+  } else {
     logging_message = "Streaming stopped\n" + status.error_message();
     LOG(ERROR) << "\n" << logging_message << std::endl;
-    return 1;
+    return true;
   }
   return true;
 }

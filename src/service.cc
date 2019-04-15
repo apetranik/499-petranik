@@ -25,12 +25,11 @@ std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
   std::size_t found = text.find('#');
   std::string hashtagword = "";
   if (found != std::string::npos) {
-    int position = static_cast<int>(found);
-    for (int i = position; i < text.length(); i++) {
-      if (text[i] != ' ') {
-        hashtagword += text[i];
-      } else {
+    for (int i = found; i < text.length(); i++) {
+      if (text[i] == ' ') {
         break;
+      } else {
+        hashtagword += text[i];
       }
     }
     hashtagword = trim(hashtagword);
@@ -39,8 +38,9 @@ std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
 }
 std::string ServiceLayer::trim(std::string &str) {
   size_t first = str.find_first_not_of(' ');
-  if (first == std::string::npos)
+  if (first == std::string::npos) {
     return "";
+  }
   size_t last = str.find_last_not_of(' ');
   return str.substr(first, (last - first + 1));
 }
@@ -156,8 +156,7 @@ void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
   // append to that proto, if not make a new hashtag proto
 
   auto from_get = backend_client_->Get(hashtagword);
-  std::cout << from_get.has_value() << std::endl;
-  if (from_get.value() != "[empty_key]") {
+  if (from_get.value() != kEmptyKey) {
     LOG(INFO) << "hashtag proto exists already!" << std::endl;
     chirp::Hashtags create_hashtag;
     create_hashtag.ParseFromString(from_get.value());
