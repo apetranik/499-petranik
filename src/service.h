@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 
+#include <glog/logging.h>
 #include <google/protobuf/repeated_field.h>
 #include <google/protobuf/util/time_util.h>
 #include <grpcpp/grpcpp.h>
@@ -17,7 +18,7 @@
 
 #include "backend_client.h"
 #include "key_value_store.h"
-
+#define LOG_DIR "../logs/"
 // A backend service to receive requests from client (command line)
 class ServiceLayer final {
 public:
@@ -51,6 +52,9 @@ public:
                          const std::string &username);
   // // Cindy's Implementation for streaming chirps with hashtags
   std::vector<chirp::Chirp> stream(const std::string hashtag);
+  // This function is called in chirp() to determine if the text consist of an
+  // hashtag. If so, save that chirp into a proto Hashtags.
+  std::string CheckIfHaveHashtag(const std::string &text);
 
 private:
   // Helper function - performs DFS on chirp thread to collect all chirps and
@@ -66,6 +70,13 @@ private:
   KeyValueStoreInterface *backend_client_;
   // mutex used for concurrency
   std::mutex mutex_;
+  // trim() takes trailing spaces off strings
+  std::string trim(std::string &str);
+  // helper function to add hashtag to database
+  void AddHashtagToDatabase(const chirp::Chirp &hash,
+                            const std::string &hashtagword);
+  // Empty string constant
+  const std::string kEmptyKey = "[empty_key]";
 };
 
 #endif

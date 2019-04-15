@@ -273,12 +273,33 @@ void ChirpClient::PrintChirpThread(
 bool ChirpClient::stream(const std::string &hashtagword) {
   grpc::ClientContext context;
   chirp::StreamRequest request;
+  chirp::StreamReply reply;
   request.set_hashtag(hashtagword);
 
   std::unique_ptr<grpc::ClientReader<chirp::StreamReply>> reader(
       stub_->stream(&context, request));
   // TODO: output the streams here.
   // Sucessfully able to call functions through grpc for streaming hashtags
+  std::vector<chirp::Chirp> chirps;
+  std::string logging_message;
+  // RPC call - read in chirps from stream continously
+  while (true) {
+    if (reader->Read(&reply)) {
+    }
+  }
+
+  grpc::Status status = reader->Finish();
+  // Monitoring stopped
+  if (status.ok()) {
+    logging_message = "Streaming ended\n" + status.error_message();
+    std::cout << logging_message << std::endl;
+    LOG(INFO) << logging_message << std::endl;
+    return false;
+  } else {
+    logging_message = "Streaming stopped\n" + status.error_message();
+    LOG(ERROR) << "\n" << logging_message << std::endl;
+    return true;
+  }
   return true;
 }
 // Instantiate client. It requires a channel, out of which the actual RPCs
@@ -319,8 +340,10 @@ int main(int argc, char **argv) {
     if (!follow.empty()) {
       return chirp_client.follow(user, follow);
     }
-    if (!stream.empty()) {
+    if (!stream.empty() && stream[0] == '#' && stream.length() > 1) {
       return chirp_client.stream("test");
+    } else if (stream.length() <= 1) {
+      LOG(ERROR) << "\n hashtag must not be empty" << std::endl;
     }
     if (monitor) {
       return chirp_client.monitor(user);

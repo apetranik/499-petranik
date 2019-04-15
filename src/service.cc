@@ -20,6 +20,30 @@ bool ServiceLayer::registeruser(const std::string &username) {
   bool success = backend_client_->Put(username, user_serialized);
   return success;
 }
+std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
+
+  std::size_t found = text.find('#');
+  std::string hashtagword = "";
+  if (found != std::string::npos) {
+    for (int i = found; i < text.length(); i++) {
+      if (text[i] == ' ') {
+        break;
+      } else {
+        hashtagword += text[i];
+      }
+    }
+    hashtagword = trim(hashtagword);
+    return hashtagword;
+  }
+}
+std::string ServiceLayer::trim(std::string &str) {
+  size_t first = str.find_first_not_of(' ');
+  if (first == std::string::npos) {
+    return "";
+  }
+  size_t last = str.find_last_not_of(' ');
+  return str.substr(first, (last - first + 1));
+}
 // Constructs a ChirpRequest and sends to service layer thru grpc and receives
 // a ChirpReply back
 std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
@@ -27,6 +51,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &parent_id) {
   std::lock_guard<std::mutex> guard(mutex_); // get lock
 
+  std::string hashtag = CheckIfHaveHashtag(text);
   // check if user who is chirping exists in key value store
   auto user_exists = backend_client_->Get(username);
   if (user_exists == "[empty_key]") {
@@ -116,7 +141,43 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
     backend_client_->Put(username,
                          monitoring_user_serialized); // save chirp to follower
   }
+
+  // add to hashtag if exist, not empty
+  if (hashtag != "") {
+    AddHashtagToDatabase(chirp, hashtag);
+  }
+
   return chirp;
+}
+void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
+                                        const std::string &hashtagword) {
+
+  // Figure out if this hashtag word exist in database already, if so, just
+  // append to that proto, if not make a new hashtag proto
+
+  auto from_get = backend_client_->Get(hashtagword);
+  if (from_get.value() != kEmptyKey) {
+    LOG(INFO) << "hashtag proto exists already!" << std::endl;
+    chirp::Hashtags create_hashtag;
+    create_hashtag.ParseFromString(from_get.value());
+    chirp::Chirp *adding_chirp_with_hashtag =
+        create_hashtag.add_chirps_with_hashtag();
+    *adding_chirp_with_hashtag = chirp;
+
+    std::string hashtag_tostring;
+    create_hashtag.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(hashtagword, hashtag_tostring);
+  } else {
+    LOG(INFO) << "hashtag proto doesn't exist yet." << std::endl;
+    chirp::Hashtags hashtag_proto;
+    hashtag_proto.set_hashtag(hashtagword);
+    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
+    *add_hashtag_chirp = chirp;
+
+    std::string hashtag_tostring;
+    hashtag_proto.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(hashtagword, hashtag_tostring);
+  }
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and
 // receives a FollowReply back
@@ -311,4 +372,7 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
 std::vector<chirp::Chirp> ServiceLayer::stream(const std::string hashtag) {
   // TODO add hashtag to database. Create proto to save all the hashtags
   // messages!
+  std::vector<chirp::Chirp> v;
+
+  return v;
 }
