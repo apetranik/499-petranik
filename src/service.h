@@ -51,10 +51,17 @@ public:
                          std::vector<std::string> &followed_by_user,
                          const std::string &username);
   // // Cindy's Implementation for streaming chirps with hashtags
-  std::vector<chirp::Chirp> stream(const std::string hashtag);
-  // This function is called in chirp() to determine if the text consist of an
-  // hashtag. If so, save that chirp into a proto Hashtags.
+  std::vector<chirp::Chirp> stream(const std::string hashtag,
+                                   std::time_t seconds,
+                                   int64_t microseconds_since_epoch);
+  // This function is called in chirp() to determine if the text consist of
+  // an hashtag. If so, save that chirp into a proto Hashtags.
   std::string CheckIfHaveHashtag(const std::string &text);
+  // This function is a helper function to find multiple hashtags in a chirp, if
+  // exists
+  std::vector<std::string> CheckIfHaveMultipleHashtags(const std::string &text);
+  // helper function to set timestamp given variable containers
+  void SetTimeStamp(std::time_t &seconds, int64_t &microseconds_since_epoch);
 
 private:
   // Helper function - performs DFS on chirp thread to collect all chirps and
@@ -75,6 +82,7 @@ private:
   // helper function to add hashtag to database
   void AddHashtagToDatabase(const chirp::Chirp &hash,
                             const std::string &hashtagword);
+  void CopyChirp(chirp::Chirp *empty_chirp, chirp::Chirp chirp_to_copy);
   // Empty string constant
   const std::string kEmptyKey = "[empty_key]";
 };

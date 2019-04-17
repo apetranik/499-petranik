@@ -285,6 +285,9 @@ bool ChirpClient::stream(const std::string &hashtagword) {
   // RPC call - read in chirps from stream continously
   while (true) {
     if (reader->Read(&reply)) {
+      chirps.push_back(reply.chirp());
+      PrintChirpThread(chirps, false);
+      chirps.clear();
     }
   }
 
@@ -341,7 +344,7 @@ int main(int argc, char **argv) {
       return chirp_client.follow(user, follow);
     }
     if (!stream.empty() && stream[0] == '#' && stream.length() > 1) {
-      return chirp_client.stream("test");
+      return chirp_client.stream(stream);
     } else if (stream.length() <= 1) {
       LOG(ERROR) << "\n hashtag must not be empty" << std::endl;
     }
