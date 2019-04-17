@@ -48,7 +48,7 @@ vpath %.proto $(PROTOS_PATH)
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
-all: run_server run_service chirp key_value_store_unit_tests service_layer_unit_tests
+all: run_server run_service chirp cindy_unit_tests
 
 run_server: key_value_store.pb.o key_value_store.grpc.pb.o ./src/key_value_store_interface.o ./src/key_value_store.o ./src/backend_server.o ./src/run_server.o
 	$(CXX) $^ $(LDFLAGS) -o ./bin/$@
@@ -59,10 +59,13 @@ run_service: service.pb.o service.grpc.pb.o key_value_store.pb.o key_value_store
 chirp: service.pb.o service.grpc.pb.o ./src/chirp_client.o
 	$(CXX) $^ $(LDFLAGS) -o ./bin/$@
 
-key_value_store_unit_tests: ./tests/key_value_store_unit_tests.o ./src/key_value_store.o
-	$(CXX) $^ $(LDFLAGS) -o ./tests/$@
+cindy_unit_tests: ./tests/cindys_test.o key_value_store.pb.o key_value_store.grpc.pb.o service.pb.o service.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o ./src/service.o ./src/service.h ./src/key_value_store.o ./src/key_value_store.h ./src/key_value_store_interface.o ./src/key_value_store_interface.h
+	$(CXX) $^ $(LDFLAGS) -o ./tests/$@ -lgtest
 
 service_layer_unit_tests: ./tests/service_layer_unit_tests.o key_value_store.pb.o key_value_store.grpc.pb.o service.pb.o service.grpc.pb.o data_storage_types.pb.o data_storage_types.grpc.pb.o ./src/key_value_store.o ./src/service.o ./src/service_controller.o ./src/backend_client.o ./src/key_value_store_interface.o
+	$(CXX) $^ $(LDFLAGS) -o ./tests/$@
+
+key_value_store_unit_tests: ./tests/key_value_store_unit_tests.o ./src/key_value_store.o ./src/key_value_store.h
 	$(CXX) $^ $(LDFLAGS) -o ./tests/$@
 
 clean:

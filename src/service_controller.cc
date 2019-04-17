@@ -142,14 +142,28 @@ grpc::Status
 ServiceController::stream(grpc::ServerContext *context,
                           const chirp::StreamRequest *request,
                           grpc::ServerWriter<chirp::StreamReply> *stream) {
+
+  std::time_t seconds;
+  int64_t microseconds_since_epoch;
+
   chirp::StreamReply reply;
   chirp::Chirp chirp;
   while (true) {
     if (context->IsCancelled()) {
       return grpc::Status::CANCELLED;
     }
-    std::vector<chirp::Chirp> chirp_stream =
-        service_.stream(request->hashtag());
+    service_.SetTimeStamp(seconds, microseconds_since_epoch);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    // calls the stream function from servicelayer to check for new chirps with
+    // hashtags
+    std::vector<chirp::Chirp> chirp_stream;
+    chirp_stream =
+        service_.stream(request->hashtag(), seconds, microseconds_since_epoch);
+    for (const chirp::Chirp chirp : chirp_stream) {
+      chirp::Chirp *c = reply.mutable_chirp();
+      *c = chirp;
+      stream->Write(reply);
+    }
   }
   return grpc::Status::OK;
 }

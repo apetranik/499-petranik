@@ -21,7 +21,6 @@ bool ServiceLayer::registeruser(const std::string &username) {
   return success;
 }
 std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
-
   std::size_t found = text.find('#');
   std::string hashtagword = "";
   if (found != std::string::npos) {
@@ -35,6 +34,29 @@ std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
     hashtagword = trim(hashtagword);
     return hashtagword;
   }
+}
+std::vector<std::string>
+ServiceLayer::CheckIfHaveMultipleHashtags(const std::string &text) {
+  std::vector<std::string> to_send;
+  std::string edit_text = text;
+  std::size_t found = edit_text.find('#');
+
+  while (edit_text != "" && (found != std::string::npos)) {
+    found = edit_text.find('#');
+    if (found == std::string::npos) {
+      return to_send;
+    }
+    std::string hashtag = CheckIfHaveHashtag(edit_text);
+    if (hashtag != "") {
+      to_send.push_back(hashtag);
+      size_t pos = edit_text.find(hashtag);
+      if (pos != std::string::npos) {
+        // If found then erase it from edit_text
+        edit_text.erase(pos, hashtag.length());
+      }
+    }
+  }
+  return to_send;
 }
 std::string ServiceLayer::trim(std::string &str) {
   size_t first = str.find_first_not_of(' ');
@@ -51,7 +73,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &parent_id) {
   std::lock_guard<std::mutex> guard(mutex_); // get lock
 
-  std::string hashtag = CheckIfHaveHashtag(text);
+  std::vector<std::string> hashtags = CheckIfHaveMultipleHashtags(text);
   // check if user who is chirping exists in key value store
   auto user_exists = backend_client_->Get(username);
   if (user_exists == "[empty_key]") {
@@ -115,7 +137,8 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
     backend_client_->Put(parent_id, parent_chirp_serialized);
   }
 
-  // Check for monitoring users, if any, send new chirp to monitoring followers
+  // Check for monitoring users, if any, send new chirp to monitoring
+  // followers
   chirp::User user;
   std::string user_serialized = backend_client_->Get(username).value();
   user.ParseFromString(user_serialized);
@@ -143,8 +166,10 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   }
 
   // add to hashtag if exist, not empty
-  if (hashtag != "") {
-    AddHashtagToDatabase(chirp, hashtag);
+  if (hashtags.size() > 0) {
+    for (int i = 0; i < hashtags.size(); i++) {
+      AddHashtagToDatabase(chirp, hashtags[i]);
+    }
   }
 
   return chirp;
@@ -154,8 +179,8 @@ void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
 
   // Figure out if this hashtag word exist in database already, if so, just
   // append to that proto, if not make a new hashtag proto
-
-  auto from_get = backend_client_->Get(hashtagword);
+  std::string offical_hashtag = "[" + hashtagword + "]";
+  auto from_get = backend_client_->Get(offical_hashtag);
   if (from_get.value() != kEmptyKey) {
     LOG(INFO) << "hashtag proto exists already!" << std::endl;
     chirp::Hashtags create_hashtag;
@@ -166,17 +191,17 @@ void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
 
     std::string hashtag_tostring;
     create_hashtag.SerializeToString(&hashtag_tostring);
-    backend_client_->Put(hashtagword, hashtag_tostring);
+    backend_client_->Put(offical_hashtag, hashtag_tostring);
   } else {
     LOG(INFO) << "hashtag proto doesn't exist yet." << std::endl;
     chirp::Hashtags hashtag_proto;
-    hashtag_proto.set_hashtag(hashtagword);
+    hashtag_proto.set_hashtag(offical_hashtag);
     chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
     *add_hashtag_chirp = chirp;
 
     std::string hashtag_tostring;
     hashtag_proto.SerializeToString(&hashtag_tostring);
-    backend_client_->Put(hashtagword, hashtag_tostring);
+    backend_client_->Put(offical_hashtag, hashtag_tostring);
   }
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and
@@ -369,10 +394,52 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
         users_monitoring); // save back all users still monitoring
   }
 }
-std::vector<chirp::Chirp> ServiceLayer::stream(const std::string hashtag) {
+std::vector<chirp::Chirp>
+ServiceLayer::stream(const std::string hashtag, std::time_t seconds,
+                     int64_t microseconds_since_epoch) {
   // TODO add hashtag to database. Create proto to save all the hashtags
   // messages!
-  std::vector<chirp::Chirp> v;
 
-  return v;
+  std::vector<chirp::Chirp> to_send;
+  auto from_get = backend_client_->Get("[" + hashtag + "]");
+
+  if (from_get.value() != kEmptyKey) {
+    chirp::Hashtags get_hashtags;
+    get_hashtags.ParseFromString(from_get.value());
+
+    for (int i = 0; i < get_hashtags.chirps_with_hashtag_size(); i++) {
+      // if the chirps with this hashtag is chirped after the current
+      // timestamp
+      if (get_hashtags.chirps_with_hashtag(i).timestamp().useconds() >=
+          microseconds_since_epoch) {
+        chirp::Chirp chirp_copy;
+        CopyChirp(&chirp_copy, get_hashtags.chirps_with_hashtag(i));
+        to_send.push_back(chirp_copy);
+      }
+    }
+  }
+  return to_send;
+}
+void ServiceLayer::CopyChirp(chirp::Chirp *empty_chirp,
+                             chirp::Chirp chirp_to_copy) {
+  empty_chirp->set_username(chirp_to_copy.username());
+  empty_chirp->set_text(chirp_to_copy.text());
+  empty_chirp->set_id(chirp_to_copy.id());
+  empty_chirp->set_parent_id(chirp_to_copy.parent_id());
+  chirp::Timestamp *time = empty_chirp->mutable_timestamp();
+  time->set_seconds(chirp_to_copy.timestamp().seconds());
+  time->set_useconds(chirp_to_copy.timestamp().useconds());
+  for (int j = 0; j < chirp_to_copy.child_ids_size(); j++) {
+    auto copy_child_ids = empty_chirp->add_child_ids();
+    *copy_child_ids = chirp_to_copy.child_ids(j);
+  }
+  empty_chirp->set_depth(chirp_to_copy.depth());
+}
+void ServiceLayer::SetTimeStamp(std::time_t &seconds,
+                                int64_t &microseconds_since_epoch) {
+  seconds = std::time(nullptr);
+  microseconds_since_epoch =
+      std::chrono::duration_cast<std::chrono::microseconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count();
 }
