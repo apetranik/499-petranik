@@ -43,8 +43,6 @@ public:
   // Helper function - Error chekcing + info for monitor eg( missing user,
   // following no one, who they follow)
   bool CheckMonitorInfo(const std::string &user);
-  // Streaming all chirps with this hashtag word
-  bool stream(const std::string &hashtagword);
 
 private:
   // pointer used to communicate with service layer

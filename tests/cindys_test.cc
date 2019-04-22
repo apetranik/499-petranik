@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <string>
+#include <thread>
 
 #include <gtest/gtest.h>
 
@@ -45,6 +46,27 @@ TEST(MultipleHashtags, Simple) {
   sl.chirp("testuser", "#hi #there", "");
   auto hashtag = sl.CheckIfHaveMultipleHashtags("#hi #there");
   ASSERT_EQ(2, hashtag.size());
+}
+void RunStreamAutomaticChirpGenerator(KeyValueStore *kv) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ServiceLayer sl(kv);
+  for (int i = 0; i < 10; i++) {
+    sl.chirp("testuser", "#hi omg " + std::to_string(i), "");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+}
+// Test stream()
+TEST(TestStream, Simple) {
+  KeyValueStore *kvs = new KeyValueStore;
+  ServiceLayer sl(kvs);
+  bool register_success = sl.registeruser("testuser");
+  ASSERT_EQ(true, register_success);
+
+  std::thread second(RunStreamAutomaticChirpGenerator, kvs);
+  auto receive_from_stream = sl.TestStream("#hi");
+  EXPECT_NE(0, receive_from_stream.size());
+  second.join();
+  delete kvs;
 }
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

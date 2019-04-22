@@ -153,7 +153,7 @@ ServiceController::stream(grpc::ServerContext *context,
       return grpc::Status::CANCELLED;
     }
     service_.SetTimeStamp(seconds, microseconds_since_epoch);
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // calls the stream function from servicelayer to check for new chirps with
     // hashtags
     std::vector<chirp::Chirp> chirp_stream;

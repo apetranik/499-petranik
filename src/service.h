@@ -1,6 +1,7 @@
 #ifndef SRC_CHIRP_SERVICE_LAYER_H_
 #define SRC_CHIRP_SERVICE_LAYER_H_
 
+#include <bits/stdc++.h>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -50,7 +51,12 @@ public:
   void terminate_monitor(chirp::User &user,
                          std::vector<std::string> &followed_by_user,
                          const std::string &username);
-  // // Cindy's Implementation for streaming chirps with hashtags
+  // Test Stream function. This function is only called for testing purposes.
+  // This class is an intermediatary to the actual GRPC call. This is also a
+  // class that is used for testing. So the way the class is designed right now,
+  // this is the only way to test the stream function.
+  std::vector<chirp::Chirp> TestStream(const std::string hashtag);
+  // Cindy's Implementation for streaming chirps with hashtags
   std::vector<chirp::Chirp> stream(const std::string hashtag,
                                    std::time_t seconds,
                                    int64_t microseconds_since_epoch);
@@ -60,7 +66,7 @@ public:
   // This function is a helper function to find multiple hashtags in a chirp, if
   // exists
   std::vector<std::string> CheckIfHaveMultipleHashtags(const std::string &text);
-  // helper function to set timestamp given variable containers
+  // Helper function to set timestamp given variable containers
   void SetTimeStamp(std::time_t &seconds, int64_t &microseconds_since_epoch);
 
 private:

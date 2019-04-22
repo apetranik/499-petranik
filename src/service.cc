@@ -182,7 +182,6 @@ void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
   std::string offical_hashtag = "[" + hashtagword + "]";
   auto from_get = backend_client_->Get(offical_hashtag);
   if (from_get.value() != kEmptyKey) {
-    LOG(INFO) << "hashtag proto exists already!" << std::endl;
     chirp::Hashtags create_hashtag;
     create_hashtag.ParseFromString(from_get.value());
     chirp::Chirp *adding_chirp_with_hashtag =
@@ -193,7 +192,6 @@ void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
     create_hashtag.SerializeToString(&hashtag_tostring);
     backend_client_->Put(offical_hashtag, hashtag_tostring);
   } else {
-    LOG(INFO) << "hashtag proto doesn't exist yet." << std::endl;
     chirp::Hashtags hashtag_proto;
     hashtag_proto.set_hashtag(offical_hashtag);
     chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
@@ -397,9 +395,6 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
 std::vector<chirp::Chirp>
 ServiceLayer::stream(const std::string hashtag, std::time_t seconds,
                      int64_t microseconds_since_epoch) {
-  // TODO add hashtag to database. Create proto to save all the hashtags
-  // messages!
-
   std::vector<chirp::Chirp> to_send;
   auto from_get = backend_client_->Get("[" + hashtag + "]");
 
@@ -419,6 +414,27 @@ ServiceLayer::stream(const std::string hashtag, std::time_t seconds,
     }
   }
   return to_send;
+}
+std::vector<chirp::Chirp> ServiceLayer::TestStream(const std::string hashtag) {
+  std::time_t seconds;
+  int64_t microseconds_since_epoch;
+  chirp::StreamReply reply;
+  chirp::Chirp chirp;
+  std::vector<chirp::Chirp> to_send_back;
+  int number_of_times_to_check_chirps = 10;
+  SetTimeStamp(seconds, microseconds_since_epoch);
+  while (number_of_times_to_check_chirps > 0) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // calls the stream function from servicelayer to check for new chirps with
+    // hashtags
+    std::vector<chirp::Chirp> chirp_stream;
+    chirp_stream = stream(hashtag, seconds, microseconds_since_epoch);
+    for (const chirp::Chirp chirp : chirp_stream) {
+      to_send_back.push_back(chirp);
+    }
+    number_of_times_to_check_chirps--;
+  }
+  return to_send_back;
 }
 void ServiceLayer::CopyChirp(chirp::Chirp *empty_chirp,
                              chirp::Chirp chirp_to_copy) {
