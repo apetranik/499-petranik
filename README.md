@@ -1,8 +1,8 @@
-# CS499 - Chirp Project Phase 1
+# CS499 - Chirp Project Phase 3 <FOLKED from petranik>
 
-## Aliya Petranik
+## Cindy Clarissa
 
-petranik@usc.edu
+clarissa@usc.edu
 
 ---
 
@@ -96,10 +96,8 @@ sudo apt-get install cmake cd /usr/src/gtest sudo cmake CMakeLists.txt sudo make
 
 ```
 sudo apt install git
-git clone https://github.com/apetranik/499-petranik.git
+git clone https://github.com/cindyciclta/499-petranik.git
 cd 499-petranik
-git checkout Phase1-PR-Fixes
-git pull origin Phase1-PR-Fixes
 make clean && make
 ```
 
@@ -156,6 +154,9 @@ _Both backend and service must be running to use chirp CLI_
   ### **Monitor**
 
       $ ./chirp --user <username> --monitor
+
+  ### **Stream**
+      $ ./chirp --user <username> --stream <#hashtag>
 
 #### Run Tests:
 

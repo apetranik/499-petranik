@@ -16,7 +16,7 @@
 
 // Handles command line input and sends requests to service layer thru GRPC
 class ChirpClient {
-public:
+ public:
   // constructs a Client object that accepts input from CLI and dispatches to
   // service layer
   ChirpClient(std::shared_ptr<grpc::Channel> channel)
@@ -43,10 +43,12 @@ public:
   // Helper function - Error chekcing + info for monitor eg( missing user,
   // following no one, who they follow)
   bool CheckMonitorInfo(const std::string &user);
+  // Streaming all chirps with this hashtag word
+  bool stream(const std::string &hashtagword);
 
-private:
+ private:
   // pointer used to communicate with service layer
   std::unique_ptr<chirp::ServiceLayer::Stub> stub_;
 };
 
-#endif // CHIRP_CLIENT_H_
+#endif  // CHIRP_CLIENT_H_

@@ -10,10 +10,9 @@ DEFINE_string(follow, "", "Starts following the given username");
 DEFINE_bool(monitor, false, "Streams new tweets from those currently followed");
 
 int ChirpClient::registeruser(const std::string &user) {
-
   grpc::ClientContext context;
   chirp::RegisterRequest request;
-  chirp::RegisterReply reply; // Data from server will be updated here
+  chirp::RegisterReply reply;  // Data from server will be updated here
 
   request.set_username(user);
 
@@ -76,7 +75,7 @@ int ChirpClient::follow(const std::string &user,
                         const std::string &user_to_follow) {
   grpc::ClientContext context;
   chirp::FollowRequest request;
-  chirp::FollowReply reply; // Data from server will be updated here
+  chirp::FollowReply reply;  // Data from server will be updated here
 
   request.set_username(user);
   request.set_to_follow(user_to_follow);
@@ -110,7 +109,7 @@ int ChirpClient::follow(const std::string &user,
 int ChirpClient::read(const std::string &chirp_id) {
   grpc::ClientContext context;
   chirp::ReadRequest request;
-  chirp::ReadReply reply; // Data from server will be updated here
+  chirp::ReadReply reply;  // Data from server will be updated here
 
   request.set_chirp_id(chirp_id);
 
@@ -143,15 +142,14 @@ int ChirpClient::read(const std::string &chirp_id) {
 }
 
 int ChirpClient::monitor(const std::string &user) {
-
   grpc::ClientContext context;
   chirp::MonitorRequest request;
-  chirp::MonitorReply reply; // Data from service layer will be updated here
+  chirp::MonitorReply reply;  // Data from service layer will be updated here
 
   request.set_username(user);
   // error check and give info to user about followers
   if (!CheckMonitorInfo(user)) {
-    return 1; // return if monitoring check failed and monitoring will fail
+    return 1;  // return if monitoring check failed and monitoring will fail
   }
 
   std::unique_ptr<grpc::ClientReader<chirp::MonitorReply>> reader(

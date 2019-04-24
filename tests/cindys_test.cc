@@ -47,11 +47,12 @@ TEST(MultipleHashtags, Simple) {
   auto hashtag = sl.CheckIfHaveMultipleHashtags("#hi #there");
   ASSERT_EQ(2, hashtag.size());
 }
-void RunStreamAutomaticChirpGenerator(KeyValueStore *kv) {
+// helper function for testing stream()
+void RunStreamAutomaticChirpGenerator(KeyValueStore *kv, std::string msg) {
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   ServiceLayer sl(kv);
   for (int i = 0; i < 10; i++) {
-    sl.chirp("testuser", "#hi omg " + std::to_string(i), "");
+    sl.chirp("testuser", msg, "");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
@@ -62,10 +63,56 @@ TEST(TestStream, Simple) {
   bool register_success = sl.registeruser("testuser");
   ASSERT_EQ(true, register_success);
 
-  std::thread second(RunStreamAutomaticChirpGenerator, kvs);
+  std::thread second(RunStreamAutomaticChirpGenerator, kvs, "omg #hi");
   auto receive_from_stream = sl.TestStream("#hi");
   EXPECT_NE(0, receive_from_stream.size());
   second.join();
+  delete kvs;
+}
+// Test stream() with 2 different hashtag
+TEST(TestStream, DoubleHashtag) {
+  KeyValueStore *kvs = new KeyValueStore;
+  ServiceLayer sl(kvs);
+  bool register_success = sl.registeruser("testuser");
+  ASSERT_EQ(true, register_success);
+
+  std::thread second(RunStreamAutomaticChirpGenerator, kvs,
+                     "#hi #there friend");
+  auto receive_from_stream = sl.TestStream("#hi");
+  EXPECT_NE(0, receive_from_stream.size());
+  EXPECT_EQ("#hi #there friend", receive_from_stream[0].text());
+  second.join();
+  delete kvs;
+}
+// Test stream() with #hi#there
+TEST(TestStream, Onewordwithtwohashtag) {
+  KeyValueStore *kvs = new KeyValueStore;
+  ServiceLayer sl(kvs);
+  bool register_success = sl.registeruser("testuser");
+  ASSERT_EQ(true, register_success);
+
+  std::thread second(RunStreamAutomaticChirpGenerator, kvs, "#hi#there friend");
+  auto receive_from_stream = sl.TestStream("#hi#there");
+  EXPECT_NE(0, receive_from_stream.size());
+  EXPECT_EQ("#hi#there friend", receive_from_stream[0].text());
+  second.join();
+  delete kvs;
+}
+// Test stream() with 2 people chirping
+TEST(TestStream, MultipleUser) {
+  KeyValueStore *kvs = new KeyValueStore;
+  ServiceLayer sl(kvs);
+  bool register_success = sl.registeruser("testuser");
+  ASSERT_EQ(true, register_success);
+
+  std::thread second(RunStreamAutomaticChirpGenerator, kvs,
+                     "#hi #there friend");
+  std::thread third(RunStreamAutomaticChirpGenerator, kvs,
+                    "#hi testing second chirp");
+  auto receive_from_stream = sl.TestStream("#hi");
+  EXPECT_NE(0, receive_from_stream.size());
+  second.join();
+  third.join();
   delete kvs;
 }
 int main(int argc, char **argv) {

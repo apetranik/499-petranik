@@ -6,7 +6,6 @@ ServiceLayer::ServiceLayer(KeyValueStoreInterface *kvs_connection) {
 // Constructs a RegisterRequest and sends to service layer thru grpc and
 // receives a RegisterReply back
 bool ServiceLayer::registeruser(const std::string &username) {
-
   std::string user_serialized = backend_client_->Get(username).value();
 
   // user already exists
@@ -20,58 +19,13 @@ bool ServiceLayer::registeruser(const std::string &username) {
   bool success = backend_client_->Put(username, user_serialized);
   return success;
 }
-std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
-  std::size_t found = text.find('#');
-  std::string hashtagword = "";
-  if (found != std::string::npos) {
-    for (int i = found; i < text.length(); i++) {
-      if (text[i] == ' ') {
-        break;
-      } else {
-        hashtagword += text[i];
-      }
-    }
-    hashtagword = trim(hashtagword);
-    return hashtagword;
-  }
-}
-std::vector<std::string>
-ServiceLayer::CheckIfHaveMultipleHashtags(const std::string &text) {
-  std::vector<std::string> to_send;
-  std::string edit_text = text;
-  std::size_t found = edit_text.find('#');
 
-  while (edit_text != "" && (found != std::string::npos)) {
-    found = edit_text.find('#');
-    if (found == std::string::npos) {
-      return to_send;
-    }
-    std::string hashtag = CheckIfHaveHashtag(edit_text);
-    if (hashtag != "") {
-      to_send.push_back(hashtag);
-      size_t pos = edit_text.find(hashtag);
-      if (pos != std::string::npos) {
-        // If found then erase it from edit_text
-        edit_text.erase(pos, hashtag.length());
-      }
-    }
-  }
-  return to_send;
-}
-std::string ServiceLayer::trim(std::string &str) {
-  size_t first = str.find_first_not_of(' ');
-  if (first == std::string::npos) {
-    return "";
-  }
-  size_t last = str.find_last_not_of(' ');
-  return str.substr(first, (last - first + 1));
-}
 // Constructs a ChirpRequest and sends to service layer thru grpc and receives
 // a ChirpReply back
 std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
                                                 const std::string &text,
                                                 const std::string &parent_id) {
-  std::lock_guard<std::mutex> guard(mutex_); // get lock
+  std::lock_guard<std::mutex> guard(mutex_);  // get lock
 
   std::vector<std::string> hashtags = CheckIfHaveMultipleHashtags(text);
   // check if user who is chirping exists in key value store
@@ -97,8 +51,9 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   }
   ++num_chirps;
   num_chirps_str = std::to_string(num_chirps);
-  bool success = backend_client_->Put("num_chirps",
-                                      num_chirps_str); // update new chirp count
+  bool success =
+      backend_client_->Put("num_chirps",
+                           num_chirps_str);  // update new chirp count
 
   // construct new Chirp and fill with relevant params
   chirp::Chirp chirp;
@@ -121,9 +76,9 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   chirp.set_allocated_timestamp(stamp);
 
   std::string chirp_serialized;
-  chirp.SerializeToString(&chirp_serialized); // Serialize chirp to string
+  chirp.SerializeToString(&chirp_serialized);  // Serialize chirp to string
   backend_client_->Put(chirp.id(),
-                       chirp_serialized); // add new chirp to backend
+                       chirp_serialized);  // add new chirp to backend
 
   // If applicable, update Parent Chirp with new child reply
   if (!parent_id.empty()) {
@@ -143,7 +98,7 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   std::string user_serialized = backend_client_->Get(username).value();
   user.ParseFromString(user_serialized);
 
-  std::vector<std::string> monitoring_users_serialized; // followers_monitoring
+  std::vector<std::string> monitoring_users_serialized;  // followers_monitoring
   std::vector<chirp::User> monitoring_users;
   std::copy(user.followers_monitoring().begin(),
             user.followers_monitoring().end(),
@@ -155,14 +110,15 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   // iterate thru all currently monitoring users and give them new chirp
   for (const std::string username : monitoring_users_serialized) {
     monitoring_user_serialized =
-        backend_client_->Get(username).value(); // Get follower
+        backend_client_->Get(username).value();  // Get follower
     monitoring_user.ParseFromString(monitoring_user_serialized);
     chirp::Chirp *incoming_chirp =
-        monitoring_user.add_monitored_chirps(); // add new chirp to be monitored
-    *incoming_chirp = chirp;                    // fill chirp
+        monitoring_user
+            .add_monitored_chirps();  // add new chirp to be monitored
+    *incoming_chirp = chirp;          // fill chirp
     monitoring_user.SerializeToString(&monitoring_user_serialized);
     backend_client_->Put(username,
-                         monitoring_user_serialized); // save chirp to follower
+                         monitoring_user_serialized);  // save chirp to follower
   }
 
   // add to hashtag if exist, not empty
@@ -173,34 +129,6 @@ std::optional<chirp::Chirp> ServiceLayer::chirp(const std::string &username,
   }
 
   return chirp;
-}
-void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
-                                        const std::string &hashtagword) {
-
-  // Figure out if this hashtag word exist in database already, if so, just
-  // append to that proto, if not make a new hashtag proto
-  std::string offical_hashtag = "[" + hashtagword + "]";
-  auto from_get = backend_client_->Get(offical_hashtag);
-  if (from_get.value() != kEmptyKey) {
-    chirp::Hashtags create_hashtag;
-    create_hashtag.ParseFromString(from_get.value());
-    chirp::Chirp *adding_chirp_with_hashtag =
-        create_hashtag.add_chirps_with_hashtag();
-    *adding_chirp_with_hashtag = chirp;
-
-    std::string hashtag_tostring;
-    create_hashtag.SerializeToString(&hashtag_tostring);
-    backend_client_->Put(offical_hashtag, hashtag_tostring);
-  } else {
-    chirp::Hashtags hashtag_proto;
-    hashtag_proto.set_hashtag(offical_hashtag);
-    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
-    *add_hashtag_chirp = chirp;
-
-    std::string hashtag_tostring;
-    hashtag_proto.SerializeToString(&hashtag_tostring);
-    backend_client_->Put(offical_hashtag, hashtag_tostring);
-  }
 }
 // Constructs a FollowRequest and sends to service layer thru grpc and
 // receives a FollowReply back
@@ -236,7 +164,7 @@ std::string ServiceLayer::follow(const std::string &username,
       return "dup_follow";
     }
   }
-  user.add_following(user_to_follow); // add as follower
+  user.add_following(user_to_follow);  // add as follower
   user.SerializeToString(&user_exists);
   backend_client_->Put(username, user_exists);
   return "success";
@@ -284,11 +212,9 @@ void ServiceLayer::ThreadDFS(std::vector<chirp::Chirp> &chirp_thread,
 }
 // Constructs a MonitorRequest and sends to service layer thru grpc and
 // receives a stream MonitorReply back
-std::vector<chirp::Chirp>
-ServiceLayer::monitor(const std::string &username,
-                      std::vector<std::string> &followed_by_user,
-                      bool registered) {
-
+std::vector<chirp::Chirp> ServiceLayer::monitor(
+    const std::string &username, std::vector<std::string> &followed_by_user,
+    bool registered) {
   std::vector<chirp::Chirp> new_chirps;
 
   // Register user as monitoring with everyone they follow
@@ -313,8 +239,8 @@ ServiceLayer::monitor(const std::string &username,
   return new_chirps;
 }
 
-std::optional<chirp::User>
-ServiceLayer::validate_monitor_request(const std::string &username) {
+std::optional<chirp::User> ServiceLayer::validate_monitor_request(
+    const std::string &username) {
   // check if user who is trying to monitor exists in key value store
   auto user_serialized = backend_client_->Get(username);
   if (user_serialized == "[empty_key]") {
@@ -389,12 +315,12 @@ void ServiceLayer::terminate_monitor(chirp::User &user,
     followed_user.SerializeToString(&users_monitoring);
     backend_client_->Put(
         followed_username,
-        users_monitoring); // save back all users still monitoring
+        users_monitoring);  // save back all users still monitoring
   }
 }
-std::vector<chirp::Chirp>
-ServiceLayer::stream(const std::string hashtag, std::time_t seconds,
-                     int64_t microseconds_since_epoch) {
+std::vector<chirp::Chirp> ServiceLayer::stream(
+    const std::string hashtag, std::time_t seconds,
+    int64_t microseconds_since_epoch, std::set<std::string> &chirp_sent) {
   std::vector<chirp::Chirp> to_send;
   auto from_get = backend_client_->Get("[" + hashtag + "]");
 
@@ -405,11 +331,14 @@ ServiceLayer::stream(const std::string hashtag, std::time_t seconds,
     for (int i = 0; i < get_hashtags.chirps_with_hashtag_size(); i++) {
       // if the chirps with this hashtag is chirped after the current
       // timestamp
+      auto it = chirp_sent.find(get_hashtags.chirps_with_hashtag(i).id());
       if (get_hashtags.chirps_with_hashtag(i).timestamp().useconds() >=
-          microseconds_since_epoch) {
+              microseconds_since_epoch &&
+          (it == chirp_sent.end())) {
         chirp::Chirp chirp_copy;
         CopyChirp(&chirp_copy, get_hashtags.chirps_with_hashtag(i));
         to_send.push_back(chirp_copy);
+        chirp_sent.insert(chirp_copy.id());
       }
     }
   }
@@ -421,18 +350,20 @@ std::vector<chirp::Chirp> ServiceLayer::TestStream(const std::string hashtag) {
   chirp::StreamReply reply;
   chirp::Chirp chirp;
   std::vector<chirp::Chirp> to_send_back;
-  int number_of_times_to_check_chirps = 10;
+  int chirps_check_left = 10;
   SetTimeStamp(seconds, microseconds_since_epoch);
-  while (number_of_times_to_check_chirps > 0) {
+  std::set<std::string> chirp_sent;
+  while (chirps_check_left > 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    // calls the stream function from servicelayer to check for new chirps with
-    // hashtags
+    // Calls the stream function from servicelayer to check for new chirps with
+    // hashtags.
     std::vector<chirp::Chirp> chirp_stream;
-    chirp_stream = stream(hashtag, seconds, microseconds_since_epoch);
+    chirp_stream =
+        stream(hashtag, seconds, microseconds_since_epoch, chirp_sent);
     for (const chirp::Chirp chirp : chirp_stream) {
       to_send_back.push_back(chirp);
     }
-    number_of_times_to_check_chirps--;
+    chirps_check_left--;
   }
   return to_send_back;
 }
@@ -458,4 +389,77 @@ void ServiceLayer::SetTimeStamp(std::time_t &seconds,
       std::chrono::duration_cast<std::chrono::microseconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count();
+}
+std::string ServiceLayer::CheckIfHaveHashtag(const std::string &text) {
+  std::size_t found = text.find('#');
+  std::string hashtagword = "";
+  if (found != std::string::npos) {
+    for (int i = found; i < text.length(); i++) {
+      if (text[i] == ' ') {
+        break;
+      } else {
+        hashtagword += text[i];
+      }
+    }
+    hashtagword = trim(hashtagword);
+    return hashtagword;
+  }
+}
+std::vector<std::string> ServiceLayer::CheckIfHaveMultipleHashtags(
+    const std::string &text) {
+  std::vector<std::string> to_send;
+  std::string edit_text = text;
+  std::size_t found = edit_text.find('#');
+
+  while (edit_text != "" && (found != std::string::npos)) {
+    found = edit_text.find('#');
+    if (found == std::string::npos) {
+      return to_send;
+    }
+    std::string hashtag = CheckIfHaveHashtag(edit_text);
+    if (hashtag != "") {
+      to_send.push_back(hashtag);
+      size_t pos = edit_text.find(hashtag);
+      if (pos != std::string::npos) {
+        // If found then erase it from edit_text
+        edit_text.erase(pos, hashtag.length());
+      }
+    }
+  }
+  return to_send;
+}
+std::string ServiceLayer::trim(std::string &str) {
+  size_t first = str.find_first_not_of(' ');
+  if (first == std::string::npos) {
+    return "";
+  }
+  size_t last = str.find_last_not_of(' ');
+  return str.substr(first, (last - first + 1));
+}
+void ServiceLayer::AddHashtagToDatabase(const chirp::Chirp &chirp,
+                                        const std::string &hashtagword) {
+  // Figure out if this hashtag word exist in database already, if so, just
+  // append to that proto, if not make a new hashtag proto
+  std::string offical_hashtag = "[" + hashtagword + "]";
+  auto from_get = backend_client_->Get(offical_hashtag);
+  if (from_get.value() != kEmptyKey) {
+    chirp::Hashtags create_hashtag;
+    create_hashtag.ParseFromString(from_get.value());
+    chirp::Chirp *adding_chirp_with_hashtag =
+        create_hashtag.add_chirps_with_hashtag();
+    *adding_chirp_with_hashtag = chirp;
+
+    std::string hashtag_tostring;
+    create_hashtag.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(offical_hashtag, hashtag_tostring);
+  } else {
+    chirp::Hashtags hashtag_proto;
+    hashtag_proto.set_hashtag(offical_hashtag);
+    chirp::Chirp *add_hashtag_chirp = hashtag_proto.add_chirps_with_hashtag();
+    *add_hashtag_chirp = chirp;
+
+    std::string hashtag_tostring;
+    hashtag_proto.SerializeToString(&hashtag_tostring);
+    backend_client_->Put(offical_hashtag, hashtag_tostring);
+  }
 }

@@ -1,9 +1,8 @@
 #include "service_controller.h"
 
-grpc::Status
-ServiceController::registeruser(grpc::ServerContext *context,
-                                const chirp::RegisterRequest *request,
-                                chirp::RegisterReply *reply) {
+grpc::Status ServiceController::registeruser(
+    grpc::ServerContext *context, const chirp::RegisterRequest *request,
+    chirp::RegisterReply *reply) {
   // check if user is already registered
 
   bool success = service_.registeruser(request->username());
@@ -17,7 +16,6 @@ ServiceController::registeruser(grpc::ServerContext *context,
 grpc::Status ServiceController::chirp(grpc::ServerContext *context,
                                       const chirp::ChirpRequest *request,
                                       chirp::ChirpReply *reply) {
-
   auto chirp = service_.chirp(request->username(), request->text(),
                               request->parent_id());
   // Nothing returned, user doesn't exist or parent id doesn't exist
@@ -89,7 +87,7 @@ grpc::Status ServiceController::validate_monitor_request(
 
   // Tell user who they are currently following
   if (!user.following().empty()) {
-    std::vector<std::string> following_users; // followers_monitoring
+    std::vector<std::string> following_users;  // followers_monitoring
     std::copy(user.following().begin(), user.following().end(),
               std::back_inserter(following_users));
     // construct msg with current users you are followering
@@ -106,11 +104,9 @@ grpc::Status ServiceController::validate_monitor_request(
   return grpc::Status::OK;
 }
 
-grpc::Status
-ServiceController::monitor(grpc::ServerContext *context,
-                           const chirp::MonitorRequest *request,
-                           grpc::ServerWriter<chirp::MonitorReply> *stream) {
-
+grpc::Status ServiceController::monitor(
+    grpc::ServerContext *context, const chirp::MonitorRequest *request,
+    grpc::ServerWriter<chirp::MonitorReply> *stream) {
   chirp::MonitorReply reply;
   chirp::User user;
   std::vector<std::string> followed_by_user;
@@ -138,27 +134,27 @@ ServiceController::monitor(grpc::ServerContext *context,
   return grpc::Status::OK;
 }
 
-grpc::Status
-ServiceController::stream(grpc::ServerContext *context,
-                          const chirp::StreamRequest *request,
-                          grpc::ServerWriter<chirp::StreamReply> *stream) {
-
+grpc::Status ServiceController::stream(
+    grpc::ServerContext *context, const chirp::StreamRequest *request,
+    grpc::ServerWriter<chirp::StreamReply> *stream) {
   std::time_t seconds;
   int64_t microseconds_since_epoch;
 
   chirp::StreamReply reply;
   chirp::Chirp chirp;
+  std::set<std::string> chirp_sent;
+  service_.SetTimeStamp(seconds, microseconds_since_epoch);
   while (true) {
     if (context->IsCancelled()) {
       return grpc::Status::CANCELLED;
     }
-    service_.SetTimeStamp(seconds, microseconds_since_epoch);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // calls the stream function from servicelayer to check for new chirps with
     // hashtags
     std::vector<chirp::Chirp> chirp_stream;
-    chirp_stream =
-        service_.stream(request->hashtag(), seconds, microseconds_since_epoch);
+    chirp_stream = service_.stream(request->hashtag(), seconds,
+                                   microseconds_since_epoch, chirp_sent);
+
     for (const chirp::Chirp chirp : chirp_stream) {
       chirp::Chirp *c = reply.mutable_chirp();
       *c = chirp;

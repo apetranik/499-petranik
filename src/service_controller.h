@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -19,7 +20,7 @@
 
 // A backend service to receive requests from client (command line)
 class ServiceController final : public chirp::ServiceLayer::Service {
-public:
+ public:
   // Registers the given non-blank username
   grpc::Status registeruser(grpc::ServerContext *context,
                             const chirp::RegisterRequest *request,
@@ -49,7 +50,7 @@ public:
                       const chirp::StreamRequest *request,
                       grpc::ServerWriter<chirp::StreamReply> *stream);
 
-private:
+ private:
   // while monitoring, write new chirps to stream
   void stream_new_chirps(chirp::User &user,
                          grpc::ServerWriter<chirp::MonitorReply> *stream,
