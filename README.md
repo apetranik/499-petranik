@@ -63,8 +63,7 @@ sudo apt-get -y update
 sudo apt-get -y install build-essential autoconf libtool pkg-config
 // install clang
 curl -SL http://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz | tar -xJC .
-sudo apt-get install clang-6.0
-sudo apt-get -y install make cmake
+sudo apt-get -y install make
 ```
 
 #### Install GRPC
