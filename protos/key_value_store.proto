@@ -1,13 +1,13 @@
 syntax = "proto3";
 package chirp;
 
-message PutRequest { 
+message PutRequest {
  bytes key = 1;
- bytes value = 2; 
+ bytes value = 2;
 }
 
 message PutReply {
-// Empty because success/failure is signaled via GRPC status. 
+// Empty because success/failure is signaled via GRPC status.
 }
 
 message GetRequest {
@@ -15,7 +15,7 @@ message GetRequest {
 }
 
 message GetReply {
- bytes value = 1; 
+ bytes value = 1;
 }
 
 message DeleteRequest {
@@ -28,6 +28,6 @@ message DeleteReply {
 
 service KeyValueStore {
  rpc put (PutRequest) returns (PutReply) {}
- rpc get (stream GetRequest) returns (stream GetReply) {} 
+ rpc get (stream GetRequest) returns (stream GetReply) {}
  rpc deletekey (DeleteRequest) returns (DeleteReply) {}
 }

@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../key_value_store.h"
+#include "../src/key_value_store.h"
 
 // Put value in KVS and then retrieve
 TEST(PutGetTest, Basic) {
@@ -57,7 +57,7 @@ TEST(DeleteTest, NonExistentKey) {
   ASSERT_EQ(false, success);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

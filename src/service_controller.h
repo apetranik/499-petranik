@@ -19,7 +19,7 @@
 
 // A backend service to receive requests from client (command line)
 class ServiceController final : public chirp::ServiceLayer::Service {
- public:
+public:
   // Registers the given non-blank username
   grpc::Status registeruser(grpc::ServerContext *context,
                             const chirp::RegisterRequest *request,
@@ -44,8 +44,12 @@ class ServiceController final : public chirp::ServiceLayer::Service {
   grpc::Status validate_monitor_request(grpc::ServerContext *context,
                                         const chirp::MonitorRequest *request,
                                         chirp::Followers *reply);
+  // Cindy's Implementation for streaming chirps with hashtags
+  grpc::Status stream(grpc::ServerContext *context,
+                      const chirp::StreamRequest *request,
+                      grpc::ServerWriter<chirp::StreamReply> *stream);
 
- private:
+private:
   // while monitoring, write new chirps to stream
   void stream_new_chirps(chirp::User &user,
                          grpc::ServerWriter<chirp::MonitorReply> *stream,
